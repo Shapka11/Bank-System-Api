@@ -6,7 +6,7 @@
 
 ## Этапы развития проекта
 
-### [Lab 1: Persistence & REST API](lab-1/)
+### [Lab 1: Persistence & REST API](https://github.com/Shapka11/Bank-System-Api/tree/main/Lab1)
 **Цель:** Реализация устойчивого бэкенда и клиентского взаимодействия.
 - **Архитектура:** Гексагональная архитектура (Domain, Application, Infrastructure, Presentation).
 - **Хранилище:** PostgreSQL (интеграция через Npgsql и FluentMigrator).
@@ -15,7 +15,7 @@
 - **Коммуникация:** Использование `Refit` для генерации типизированных HTTP-клиентов.
 - **Инфраструктура:** Развертывание БД через Docker.
 
-### [Lab 2: Distributed Systems & gRPC](lab-2/)
+### [Lab 2: Distributed Systems & gRPC](https://github.com/Shapka11/Bank-System-Api/tree/main/Lab2)
 **Цель:** Переход на микросервисную архитектуру и реализация сложной бизнес-логики.
 - **API:** Переход на gRPC для межсервисного взаимодействия.
 - **Gateway:** Реализация HTTP-гейтвея для проксирования запросов к gRPC-сервису.
