@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\Application\Bsa.Application\Bsa.Application.csproj" />
+    <ProjectReference Include="..\Infrastructure\Bsa.Infrastructure.Persistence\Bsa.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\Presentation\Bsa.Presentation.Http\Bsa.Presentation.Http.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+</Project>

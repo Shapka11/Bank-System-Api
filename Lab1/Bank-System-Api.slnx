@@ -1,0 +1,40 @@
+﻿<Solution>
+  <Folder Name="/common/">
+    <File Path=".gitignore" />
+    <File Path="Directory.Packages.props" />
+    <File Path="Directory.Build.props" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/console-client/">
+    <Project Path="src/console-client/Bsa.Cli/Bsa.Cli.csproj" />
+  </Folder>
+  <Folder Name="/src/console-client/Application/">
+    <Project Path="src/console-client/Application/Bsa.Cli.Application.Abstractions/Bsa.Cli.Application.Abstractions.csproj" />
+    <Project Path="src/console-client/Application/Bsa.Cli.Application.Contracts/Bsa.Cli.Application.Contracts.csproj" />
+    <Project Path="src/console-client/Application/Bsa.Cli.Application/Bsa.Cli.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/console-client/Infrastructure/">
+    <Project Path="src/console-client/Infrastructure/Bsa.Cli.Infrastructure.ClientService/Bsa.Cli.Infrastructure.ClientService.csproj" />
+  </Folder>
+  <Folder Name="/src/console-client/Presentation/">
+    <Project Path="src/console-client/Presentation/Bsa.Cli.Presentation.Cli/Bsa.Cli.Presentation.Cli.csproj" />
+  </Folder>
+  <Folder Name="/src/service/">
+    <Project Path="src/service/Bsa/Bsa.csproj" />
+  </Folder>
+  <Folder Name="/src/service/Application/">
+    <Project Path="src/service/Application/Bsa.Application.Abstractions/Bsa.Application.Abstractions.csproj" />
+    <Project Path="src/service/Application/Bsa.Application.Contracts/Bsa.Application.Contracts.csproj" />
+    <Project Path="src/service/Application/Bsa.Application/Bsa.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/service/Domain/">
+    <Project Path="src/service/Domain/Bsa.Domain/Bsa.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/service/Infrastructure/">
+    <Project Path="src/service/Infrastructure/Bsa.Infrastructure.Persistence/Bsa.Infrastructure.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/service/Presentation/">
+    <Project Path="src/service/Presentation/Bsa.Presentation.Http/Bsa.Presentation.Http.csproj" />
+  </Folder>
+</Solution>

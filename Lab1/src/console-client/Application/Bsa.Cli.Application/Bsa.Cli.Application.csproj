@@ -1,0 +1,8 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+      <ProjectReference Include="..\Bsa.Cli.Application.Abstractions\Bsa.Cli.Application.Abstractions.csproj" />
+      <ProjectReference Include="..\Bsa.Cli.Application.Contracts\Bsa.Cli.Application.Contracts.csproj" />
+    </ItemGroup>
+
+</Project>
