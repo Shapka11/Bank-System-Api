@@ -1,0 +1,27 @@
+﻿syntax = "proto3";
+import "models.proto";
+
+package bsa.sharp_backend;
+option csharp_namespace = "Bsa.CsharpBackend.Grpc";
+
+
+service UserService {
+  rpc Login(LoginUserRequest) returns (LoginUserResponse);
+
+  rpc Logout(LogoutUserRequest) returns (LogoutUserResponse);
+}
+
+message LoginUserRequest {
+  string account_number = 1;
+  string password = 2;
+}
+
+message LoginUserResponse {
+  Session session = 1;
+}
+
+message LogoutUserRequest {
+  string id = 1;
+}
+
+message LogoutUserResponse { }

@@ -1,0 +1,40 @@
+﻿<Solution>
+  <Folder Name="/common/">
+    <File Path=".gitignore" />
+    <File Path="Directory.Packages.props" />
+    <File Path="Directory.Build.props" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/gateway/">
+    <Project Path="src/gateway/Bsa.Gateway/Bsa.Gateway.csproj" />
+  </Folder>
+  <Folder Name="/src/gateway/Application/">
+    <Project Path="src/gateway/Application/Bsa.Gateway.Application.Abstractions/Bsa.Gateway.Application.Abstractions.csproj" />
+    <Project Path="src/gateway/Application/Bsa.Gateway.Application/Bsa.Gateway.Application.csproj" />
+    <Project Path="src\gateway\Application\Bsa.Gateway.Application.Contracts\Bsa.Gateway.Application.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/gateway/Infrastructure/">
+    <Project Path="src/gateway/Infrastructure/Bsa.Gateway.Infrastructure.BankService/Bsa.Gateway.Infrastructure.BankService.csproj" />
+  </Folder>
+  <Folder Name="/src/gateway/Presentation/">
+    <Project Path="src/gateway/Presentation/Bsa.Gateway.Presentation.Http/Bsa.Gateway.Presentation.Http.csproj" />
+  </Folder>
+  <Folder Name="/src/service/">
+    <Project Path="src/service/Bsa/Bsa.csproj" />
+  </Folder>
+  <Folder Name="/src/service/Application/">
+    <Project Path="src/service/Application/Bsa.Application.Abstractions/Bsa.Application.Abstractions.csproj" />
+    <Project Path="src/service/Application/Bsa.Application.Contracts/Bsa.Application.Contracts.csproj" />
+    <Project Path="src/service/Application/Bsa.Application/Bsa.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/service/Domain/">
+    <Project Path="src/service/Domain/Bsa.Domain/Bsa.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/service/Infrastructure/">
+    <Project Path="src/service/Infrastructure/Bsa.Infrastructure.Persistence/Bsa.Infrastructure.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/service/Presentation/">
+    <Project Path="src/service/Presentation/Bsa.Presentation.Grpc/Bsa.Presentation.Grpc.csproj" />
+  </Folder>
+</Solution>

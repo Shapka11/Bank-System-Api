@@ -1,0 +1,13 @@
+﻿using Bsa.Gateway.Application.Contracts.HistoryOperations.Models;
+
+namespace Bsa.Gateway.Application.Contracts.HistoryOperations.Operations;
+
+public abstract record GetHistoryOperationsResponse
+{
+    private GetHistoryOperationsResponse() { }
+
+    public sealed record Success(IEnumerable<HistoryOperationDto> History, string? PageToken)
+        : GetHistoryOperationsResponse;
+
+    public sealed record Failure(string ErrorMessage) : GetHistoryOperationsResponse;
+}

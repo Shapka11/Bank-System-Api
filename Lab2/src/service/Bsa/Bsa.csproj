@@ -1,0 +1,6 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\Application\Bsa.Application\Bsa.Application.csproj" />
+    <ProjectReference Include="..\Infrastructure\Bsa.Infrastructure.Persistence\Bsa.Infrastructure.Persistence.csproj" />
+  </ItemGroup>
+</Project>
