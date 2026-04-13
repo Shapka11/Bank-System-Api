@@ -26,7 +26,4 @@ public static class InvoiceStatusMappingExtensions
             _ => throw new ArgumentOutOfRangeException(nameof(dto), dto, "Incorrect status"),
         };
     }
-
-    public static IEnumerable<InvoiceStatus> MapToDomain(this IEnumerable<InvoiceStatusDto> dtos)
-        => dtos.Select(MapToDomain);
 }

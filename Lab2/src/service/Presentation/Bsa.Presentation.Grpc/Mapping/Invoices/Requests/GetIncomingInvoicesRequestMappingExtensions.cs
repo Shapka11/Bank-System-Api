@@ -14,7 +14,7 @@ public static class GetIncomingInvoicesRequestMappingExtensions
         return new GetIncomingInvoices.Request(
             Guid.Parse(protoRequest.SessionId),
             protoRequest.SenderAccountNumbers,
-            protoRequest.Statuses.MapToDto(),
+            protoRequest.Statuses.Select(s => s.MapToDto()),
             protoRequest.Pagination.PageSize,
             pageToken);
     }

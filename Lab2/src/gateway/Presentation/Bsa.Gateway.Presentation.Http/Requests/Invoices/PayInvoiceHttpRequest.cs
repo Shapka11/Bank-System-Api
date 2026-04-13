@@ -1,6 +1,6 @@
 ﻿namespace Bsa.Gateway.Presentation.Http.Requests.Invoices;
 
-public readonly record struct PayInvoiceHttpRequest
+public sealed class PayInvoiceHttpRequest
 {
     public required Guid SessionId { get; init; }
 

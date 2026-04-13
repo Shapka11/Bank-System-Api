@@ -2,12 +2,12 @@
 
 namespace Bsa.Gateway.Presentation.Http.Requests.HistoryOperations;
 
-public readonly record struct GetHistoryHttpRequest
+public sealed class GetHistoryHttpRequest
 {
     public required Guid SessionId { get; init; }
 
     public string? PageToken { get; init; }
 
     [Range(minimum: 1, maximum: 1000)]
-    public int PageSize { get; init; }
+    public required int PageSize { get; init; }
 }

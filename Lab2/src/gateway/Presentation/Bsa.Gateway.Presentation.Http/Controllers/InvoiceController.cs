@@ -124,7 +124,7 @@ public sealed class InvoiceController : ControllerBase
         {
             GetOutgoingInvoicesResponse.Success success => Ok(new GetOutgoingInvoicesHttpResponse
             {
-                Invoices = success.Invoices.MapToModel(),
+                Invoices = success.Invoices.Select(i => i.MapToModel()).ToArray(),
                 PageToken = success.PageToken,
             }),
             GetOutgoingInvoicesResponse.Failure failure => BadRequest(new ProblemDetails
@@ -153,7 +153,7 @@ public sealed class InvoiceController : ControllerBase
         {
             GetIncomingInvoicesResponse.Success success => Ok(new GetIncomingInvoicesHttpResponse
             {
-                Invoices = success.Invoices.MapToModel(),
+                Invoices = success.Invoices.Select(i => i.MapToModel()).ToArray(),
                 PageToken = success.PageToken,
             }),
             GetIncomingInvoicesResponse.Failure failure => BadRequest(new ProblemDetails

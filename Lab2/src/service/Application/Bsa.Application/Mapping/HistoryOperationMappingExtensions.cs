@@ -28,18 +28,15 @@ public static class HistoryOperationMappingExtensions
         };
     }
 
-    public static IEnumerable<HistoryOperationDto> MapToDto(this HistoryOperation[] operations)
-        => operations.Select(operation => operation.MapToDto()).ToArray();
-
     public static CreateAccountHistoryOperationDto MapToDto(this CreateAccountHistoryOperation operation)
-        => new CreateAccountHistoryOperationDto(
+        => new(
             operation.Id.Value,
             operation.AccountId.Value,
             operation.AccountNumber.Value,
             operation.OccurredAt);
 
     public static CheckBalanceHistoryOperationDto MapToDto(this CheckBalanceHistoryOperation operation)
-        => new CheckBalanceHistoryOperationDto(
+        => new(
             operation.Id.Value,
             operation.AccountId.Value,
             operation.AccountNumber.Value,
@@ -47,7 +44,7 @@ public static class HistoryOperationMappingExtensions
             operation.OccurredAt);
 
     public static DepositHistoryOperationDto MapToDto(this DepositHistoryOperation operation)
-        => new DepositHistoryOperationDto(
+        => new(
             operation.Id.Value,
             operation.AccountId.Value,
             operation.AccountNumber.Value,
@@ -55,7 +52,7 @@ public static class HistoryOperationMappingExtensions
             operation.OccurredAt);
 
     public static WithdrawHistoryOperationDto MapToDto(this WithdrawHistoryOperation operation)
-        => new WithdrawHistoryOperationDto(
+        => new(
             operation.Id.Value,
             operation.AccountId.Value,
             operation.AccountNumber.Value,
@@ -63,7 +60,7 @@ public static class HistoryOperationMappingExtensions
             operation.OccurredAt);
 
     public static InvoiceIssuedHistoryOperationDto MapToDto(this InvoiceIssuedHistoryOperation operation)
-        => new InvoiceIssuedHistoryOperationDto(
+        => new(
             operation.Id.Value,
             operation.AccountId.Value,
             operation.AccountNumber.Value,
@@ -72,7 +69,7 @@ public static class HistoryOperationMappingExtensions
 
     public static InvoicePaymentReceivedHistoryOperationDto MapToDto(
         this InvoicePaymentReceivedHistoryOperation operation)
-        => new InvoicePaymentReceivedHistoryOperationDto(
+        => new(
             operation.Id.Value,
             operation.AccountId.Value,
             operation.AccountNumber.Value,
@@ -82,7 +79,7 @@ public static class HistoryOperationMappingExtensions
 
     public static InvoicePaymentSentHistoryOperationDto MapToDto(
         this InvoicePaymentSentHistoryOperation operation)
-        => new InvoicePaymentSentHistoryOperationDto(
+        => new(
             operation.Id.Value,
             operation.AccountId.Value,
             operation.AccountNumber.Value,
@@ -91,7 +88,7 @@ public static class HistoryOperationMappingExtensions
             operation.OccurredAt);
 
     public static InvoiceReceivedHistoryOperationDto MapToDto(this InvoiceReceivedHistoryOperation operation)
-        => new InvoiceReceivedHistoryOperationDto(
+        => new(
             operation.Id.Value,
             operation.AccountId.Value,
             operation.AccountNumber.Value,
@@ -99,7 +96,7 @@ public static class HistoryOperationMappingExtensions
             operation.OccurredAt);
 
     public static InvoiceRevokedHistoryOperationDto MapToDto(this InvoiceRevokedHistoryOperation operation)
-        => new InvoiceRevokedHistoryOperationDto(
+        => new(
             operation.Id.Value,
             operation.AccountId.Value,
             operation.AccountNumber.Value,

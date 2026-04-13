@@ -2,7 +2,6 @@
 using Bsa.Application.Abstractions.Persistence.Repositories;
 using Bsa.Domain.Accounts;
 using Bsa.Domain.Sessions;
-using Bsa.Infrastructure.Persistence.Specifications;
 using Itmo.Dev.Platform.Persistence.Abstractions.Commands;
 using Itmo.Dev.Platform.Persistence.Abstractions.Connections;
 using System.Data;
@@ -100,12 +99,5 @@ public sealed class SessionRepository : ISessionRepository
                 new AccountId(reader.GetInt64("account_id")),
                 reader.GetFieldValue<DateTimeOffset>("created_at"));
         }
-    }
-
-    public async Task<SessionBase?> FindSessionByIdAsync(Guid sessionId, CancellationToken cancellationToken)
-    {
-        SessionQuery query = SessionSpecifications.ById(sessionId);
-
-        return await QueryAsync(query, cancellationToken).SingleOrDefaultAsync(cancellationToken);
     }
 }

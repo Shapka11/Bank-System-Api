@@ -32,7 +32,9 @@ public sealed class HistoryOperationService : IHistoryOperationService
             GetHistoryOperations.Response.Failure failure
                 => new GetHistoryOperationsResponse.Failure(failure.ErrorMessage),
             GetHistoryOperations.Response.Success success
-                => new GetHistoryOperationsResponse.Success(success.History.MapToDto(), success.PageToken),
+                => new GetHistoryOperationsResponse.Success(
+                    success.History.Select(h => h.MapToDto()).ToArray(),
+                    success.PageToken),
             _ => throw new UnreachableException(),
         };
     }

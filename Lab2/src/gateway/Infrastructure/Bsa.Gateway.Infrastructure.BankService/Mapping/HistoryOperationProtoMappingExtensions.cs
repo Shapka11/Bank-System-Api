@@ -1,7 +1,6 @@
 ﻿using Bsa.Gateway.Application.Abstractions.HistoryOperations.Models;
 using Bsa.Gateway.Application.Abstractions.HistoryOperations.Models.Accounts;
 using Bsa.Gateway.Application.Abstractions.HistoryOperations.Models.Invoices;
-using Google.Protobuf.Collections;
 
 namespace Bsa.Gateway.Infrastructure.BankService.Mapping;
 
@@ -27,9 +26,6 @@ public static class HistoryOperationProtoMappingExtensions
             _ => throw new ArgumentOutOfRangeException(nameof(proto), "Unknown operation type"),
         };
     }
-
-    public static IEnumerable<BankHistoryOperationModel> MapToModel(this RepeatedField<ProtoHistoryOperation> protos)
-        => protos.Select(MapToModel);
 
     private static CreateAccountBankHistoryOperationModel MapToCreateAccountModel(ProtoHistoryOperation proto)
         => new(

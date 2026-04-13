@@ -2,6 +2,7 @@
 using Bsa.Application.Contracts.Users;
 using Bsa.Application.Contracts.Users.User;
 using Bsa.Application.Mapping;
+using Bsa.Application.Specifications;
 using Bsa.Domain.Accounts;
 using Bsa.Domain.Sessions;
 using Bsa.Domain.ValueObjects;
@@ -11,10 +12,17 @@ namespace Bsa.Application.Services;
 public sealed class UserService : IUserService
 {
     private readonly IPersistenceContext _context;
+    private readonly AccountSpecifications _accountSpecifications;
+    private readonly SessionSpecifications _sessionSpecifications;
 
-    public UserService(IPersistenceContext context)
+    public UserService(
+        IPersistenceContext context,
+        AccountSpecifications accountSpecifications,
+        SessionSpecifications sessionSpecifications)
     {
         _context = context;
+        _accountSpecifications = accountSpecifications;
+        _sessionSpecifications = sessionSpecifications;
     }
 
     public async Task<LoginUser.Response> LoginAsync(LoginUser.Request request, CancellationToken cancellationToken)
@@ -22,7 +30,7 @@ public sealed class UserService : IUserService
         var accountNumber = new AccountNumber(request.AccountNumber);
         var password = new Password(request.Password);
 
-        Account? account = await _context.AccountsRepository
+        Account? account = await _accountSpecifications
             .FindAccountByNumberAsync(accountNumber, cancellationToken);
 
         if (account is null)
@@ -41,8 +49,7 @@ public sealed class UserService : IUserService
         LogoutUser.Request request,
         CancellationToken cancellationToken)
     {
-        SessionBase? session = await _context.SessionRepository
-            .FindSessionByIdAsync(request.Id, cancellationToken);
+        SessionBase? session = await _sessionSpecifications.FindSessionByIdAsync(request.Id, cancellationToken);
 
         if (session is not UserSession)
             return new LogoutUser.Response.Unauthorized(request.Id, "Session not user");

@@ -18,8 +18,8 @@ public static class SessionMappingExtensions
     }
 
     public static UserSessionDto MapToDto(this UserSession session)
-        => new UserSessionDto(session.Id, session.AccountId.Value, session.CreatedAt);
+        => new(session.Id, session.AccountId.Value, session.CreatedAt);
 
     public static AdminSessionDto MapToDto(this AdminSession session)
-        => new AdminSessionDto(session.Id, session.CreatedAt);
+        => new(session.Id, session.CreatedAt);
 }

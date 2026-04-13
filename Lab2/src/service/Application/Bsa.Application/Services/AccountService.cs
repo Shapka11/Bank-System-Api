@@ -2,6 +2,7 @@
 using Bsa.Application.Contracts.Accounts;
 using Bsa.Application.Contracts.Accounts.Operations;
 using Bsa.Application.Mapping;
+using Bsa.Application.Specifications;
 using Bsa.Domain.Accounts;
 using Bsa.Domain.Accounts.Results;
 using Bsa.Domain.HistoryOperations;
@@ -17,30 +18,35 @@ namespace Bsa.Application.Services;
 public sealed class AccountService : IAccountService
 {
     private readonly IPersistenceContext _context;
+    private readonly AccountSpecifications _accountSpecifications;
+    private readonly SessionSpecifications _sessionSpecifications;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IPersistenceTransactionProvider _transactionProvider;
 
     public AccountService(
         IPersistenceContext context,
         IDateTimeProvider dateTimeProvider,
-        IPersistenceTransactionProvider transactionProvider)
+        IPersistenceTransactionProvider transactionProvider,
+        AccountSpecifications accountSpecifications,
+        SessionSpecifications sessionSpecifications)
     {
         _context = context;
         _dateTimeProvider = dateTimeProvider;
         _transactionProvider = transactionProvider;
+        _accountSpecifications = accountSpecifications;
+        _sessionSpecifications = sessionSpecifications;
     }
 
     public async Task<CreateAccount.Response> CreateAsync(
         CreateAccount.Request request,
         CancellationToken cancellationToken)
     {
-        SessionBase? adminSession = await _context.SessionRepository
-            .FindSessionByIdAsync(request.Id, cancellationToken);
+        SessionBase? adminSession = await _sessionSpecifications.FindSessionByIdAsync(request.Id, cancellationToken);
 
         if (adminSession is not AdminSession)
             return new CreateAccount.Response.Unauthorized(request.Id, "Session not admin");
 
-        Account? dbAccount = await _context.AccountsRepository
+        Account? dbAccount = await _accountSpecifications
             .FindAccountByNumberAsync(new AccountNumber(request.AccountNumber), cancellationToken);
 
         if (dbAccount is not null)
@@ -80,13 +86,12 @@ public sealed class AccountService : IAccountService
         Deposit.Request request,
         CancellationToken cancellationToken)
     {
-        SessionBase? session = await _context.SessionRepository
-            .FindSessionByIdAsync(request.Id, cancellationToken);
+        SessionBase? session = await _sessionSpecifications.FindSessionByIdAsync(request.Id, cancellationToken);
 
         if (session is not UserSession userSession)
             return new Deposit.Response.Unauthorized(request.Id, "Session not user");
 
-        Account? account = await _context.AccountsRepository
+        Account? account = await _accountSpecifications
             .FindAccountByIdAsync(userSession.AccountId, cancellationToken);
 
         if (account is null)
@@ -120,13 +125,12 @@ public sealed class AccountService : IAccountService
         Withdraw.Request request,
         CancellationToken cancellationToken)
     {
-        SessionBase? session = await _context.SessionRepository
-            .FindSessionByIdAsync(request.Id, cancellationToken);
+        SessionBase? session = await _sessionSpecifications.FindSessionByIdAsync(request.Id, cancellationToken);
 
         if (session is not UserSession userSession)
             return new Withdraw.Response.Unauthorized(request.Id, "Session not user");
 
-        Account? account = await _context.AccountsRepository
+        Account? account = await _accountSpecifications
             .FindAccountByIdAsync(userSession.AccountId, cancellationToken);
 
         if (account is null)
@@ -163,13 +167,12 @@ public sealed class AccountService : IAccountService
         GetBalance.Request request,
         CancellationToken cancellationToken)
     {
-        SessionBase? session = await _context.SessionRepository
-            .FindSessionByIdAsync(request.Id, cancellationToken);
+        SessionBase? session = await _sessionSpecifications.FindSessionByIdAsync(request.Id, cancellationToken);
 
         if (session is not UserSession userSession)
             return new GetBalance.Response.Unauthorized(request.Id, "Session not user");
 
-        Account? account = await _context.AccountsRepository
+        Account? account = await _accountSpecifications
             .FindAccountByIdAsync(userSession.AccountId, cancellationToken);
 
         if (account is null)

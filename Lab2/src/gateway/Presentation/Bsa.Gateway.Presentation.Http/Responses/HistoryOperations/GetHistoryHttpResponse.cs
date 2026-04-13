@@ -4,7 +4,7 @@ namespace Bsa.Gateway.Presentation.Http.Responses.HistoryOperations;
 
 public readonly record struct GetHistoryHttpResponse
 {
-    public required IEnumerable<HistoryOperationModel> History { get; init; }
+    public required IReadOnlyCollection<HistoryOperationModel> History { get; init; }
 
     public string? PageToken { get; init; }
 }

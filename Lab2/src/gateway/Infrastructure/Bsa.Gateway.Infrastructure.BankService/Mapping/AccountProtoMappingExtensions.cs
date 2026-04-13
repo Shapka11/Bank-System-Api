@@ -5,7 +5,7 @@ namespace Bsa.Gateway.Infrastructure.BankService.Mapping;
 public static class AccountProtoMappingExtensions
 {
     public static BankAccountModel MapToModel(this ProtoAccount account)
-        => new BankAccountModel(
+        => new(
             account.Id,
             account.Number,
             account.Password,

@@ -14,7 +14,4 @@ public static class InvoiceMappingExtensions
             dto.Status.MapToModel(),
             dto.CreatedAt,
             dto.UpdatedAt);
-
-    public static IEnumerable<InvoiceModel> MapToModel(this IEnumerable<InvoiceDto> dtos)
-        => dtos.Select(MapToModel);
 }

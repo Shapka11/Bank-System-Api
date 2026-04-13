@@ -3,6 +3,7 @@ using Bsa.Application.Contracts.Users;
 using Bsa.Application.Contracts.Users.Admin;
 using Bsa.Application.Mapping;
 using Bsa.Application.Options;
+using Bsa.Application.Specifications;
 using Bsa.Domain.Sessions;
 using Bsa.Domain.ValueObjects;
 using Microsoft.Extensions.Options;
@@ -12,12 +13,17 @@ namespace Bsa.Application.Services;
 public sealed class AdminService : IAdminService
 {
     private readonly IPersistenceContext _context;
+    private readonly SessionSpecifications _sessionSpecifications;
     private readonly IOptionsMonitor<SecurityOptions> _options;
 
-    public AdminService(IPersistenceContext context, IOptionsMonitor<SecurityOptions> options)
+    public AdminService(
+        IPersistenceContext context,
+        IOptionsMonitor<SecurityOptions> options,
+        SessionSpecifications sessionSpecifications)
     {
         _context = context;
         _options = options;
+        _sessionSpecifications = sessionSpecifications;
     }
 
     public async Task<LoginAdmin.Response> LoginAsync(
@@ -40,8 +46,7 @@ public sealed class AdminService : IAdminService
         LogoutAdmin.Request request,
         CancellationToken cancellationToken)
     {
-        SessionBase? adminSession = await _context.SessionRepository
-            .FindSessionByIdAsync(request.Id, cancellationToken);
+        SessionBase? adminSession = await _sessionSpecifications.FindSessionByIdAsync(request.Id, cancellationToken);
 
         if (adminSession is not AdminSession)
             return new LogoutAdmin.Response.Unauthorized(request.Id, "Session not admin");

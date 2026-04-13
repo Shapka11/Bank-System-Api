@@ -65,7 +65,7 @@ public sealed class InvoiceClient : IInvoiceClient
         var clientRequest = new ProtoGetOutgoingInvoicesRequest(
             request.SessionId.ToString(),
             request.ReceiverAccountNumbers.MapToProto(),
-            request.Statuses.MapToProto(),
+            request.Statuses.Select(s => s.MapToProto()),
             new ProtoPagination(request.PageSize, request.PageToken));
 
         ProtoGetOutgoingInvoicesResponse clientResponse = await _invoiceClient.GetOutgoingInvoiceAsync(
@@ -73,7 +73,7 @@ public sealed class InvoiceClient : IInvoiceClient
             cancellationToken: cancellationToken);
 
         return new GetOutgoingInvoices.Response.Success(
-            clientResponse.Invoices.MapToModel(),
+            clientResponse.Invoices.Select(i => i.MapToModel()).ToArray(),
             clientResponse.PageToken);
     }
 
@@ -84,7 +84,7 @@ public sealed class InvoiceClient : IInvoiceClient
         var clientRequest = new ProtoGetIncomingInvoicesRequest(
             request.SessionId.ToString(),
             request.SenderAccountNumbers.MapToProto(),
-            request.Statuses.MapToProto(),
+            request.Statuses.Select(s => s.MapToProto()),
             new ProtoPagination(request.PageSize, request.PageToken));
 
         ProtoGetIncomingInvoicesResponse clientResponse = await _invoiceClient.GetIncomingInvoiceAsync(
@@ -92,7 +92,7 @@ public sealed class InvoiceClient : IInvoiceClient
             cancellationToken: cancellationToken);
 
         return new GetIncomingInvoices.Response.Success(
-            clientResponse.Invoices.MapToModel(),
+            clientResponse.Invoices.Select(i => i.MapToModel()).ToArray(),
             clientResponse.PageToken);
     }
 }

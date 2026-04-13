@@ -14,7 +14,7 @@ public static class GetOutgoingInvoicesMappingExtensions
         return new GetOutgoingInvoices.Request(
             Guid.Parse(protoRequest.SessionId),
             protoRequest.ReceiverAccountNumbers,
-            protoRequest.Statuses.MapToDto(),
+            protoRequest.Statuses.Select(s => s.MapToDto()),
             protoRequest.Pagination.PageSize,
             pageToken);
     }

@@ -3,6 +3,7 @@ using Bsa.Application.Abstractions.Persistence.Queries;
 using Bsa.Application.Contracts.HistoryOperations;
 using Bsa.Application.Contracts.HistoryOperations.Operations;
 using Bsa.Application.Mapping;
+using Bsa.Application.Specifications;
 using Bsa.Domain.Accounts;
 using Bsa.Domain.HistoryOperations;
 using Bsa.Domain.Sessions;
@@ -12,18 +13,19 @@ namespace Bsa.Application.Services;
 public sealed class HistoryOperationService : IHistoryOperationService
 {
     private readonly IPersistenceContext _context;
+    private readonly SessionSpecifications _sessionSpecifications;
 
-    public HistoryOperationService(IPersistenceContext context)
+    public HistoryOperationService(IPersistenceContext context, SessionSpecifications sessionSpecifications)
     {
         _context = context;
+        _sessionSpecifications = sessionSpecifications;
     }
 
     public async Task<GetHistoryOperations.Response> GetAsync(
         GetHistoryOperations.Request request,
         CancellationToken cancellationToken)
     {
-        SessionBase? session = await _context.SessionRepository
-            .FindSessionByIdAsync(request.Id, cancellationToken);
+        SessionBase? session = await _sessionSpecifications.FindSessionByIdAsync(request.Id, cancellationToken);
 
         if (session is not UserSession userSession)
             return new GetHistoryOperations.Response.Unauthorized(request.Id, "Session is not user");
@@ -45,6 +47,8 @@ public sealed class HistoryOperationService : IHistoryOperationService
             ? null
             : new GetHistoryOperations.PageToken(history.Last().Id.Value);
 
-        return new GetHistoryOperations.Response.Success(history.MapToDto(), responsePageToken);
+        return new GetHistoryOperations.Response.Success(
+            history.Select(h => h.MapToDto()).ToArray(),
+            responsePageToken);
     }
 }

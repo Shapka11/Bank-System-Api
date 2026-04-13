@@ -1,6 +1,6 @@
 ﻿namespace Bsa.Gateway.Presentation.Http.Requests.Users;
 
-public readonly record struct LogoutAdminHttpRequest
+public sealed class LogoutAdminHttpRequest
 {
     public required Guid SessionId { get; init; }
 }

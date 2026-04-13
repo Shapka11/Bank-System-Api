@@ -26,18 +26,15 @@ public static class HistoryOperationMappingExtensions
         };
     }
 
-    public static IEnumerable<HistoryOperationDto> MapToDto(this IEnumerable<BankHistoryOperationModel> entities)
-        => entities.Select(MapToDto);
-
     public static CreateAccountHistoryOperationDto MapToDto(this CreateAccountBankHistoryOperationModel model)
-        => new CreateAccountHistoryOperationDto(
+        => new(
             model.Id,
             model.AccountId,
             model.AccountNumber,
             model.OccurredAt);
 
     public static CheckBalanceHistoryOperationDto MapToDto(this CheckBalanceBankHistoryOperationModel model)
-        => new CheckBalanceHistoryOperationDto(
+        => new(
             model.Id,
             model.AccountId,
             model.AccountNumber,
@@ -45,7 +42,7 @@ public static class HistoryOperationMappingExtensions
             model.OccurredAt);
 
     public static DepositHistoryOperationDto MapToDto(this DepositBankHistoryOperationModel model)
-        => new DepositHistoryOperationDto(
+        => new(
             model.Id,
             model.AccountId,
             model.AccountNumber,
@@ -53,7 +50,7 @@ public static class HistoryOperationMappingExtensions
             model.OccurredAt);
 
     public static WithdrawHistoryOperationDto MapToDto(this WithdrawBankHistoryOperationModel model)
-        => new WithdrawHistoryOperationDto(
+        => new(
             model.Id,
             model.AccountId,
             model.AccountNumber,
@@ -61,7 +58,7 @@ public static class HistoryOperationMappingExtensions
             model.OccurredAt);
 
     public static InvoiceIssuedHistoryOperationDto MapToDto(this InvoiceIssuedBankHistoryOperationModel model)
-        => new InvoiceIssuedHistoryOperationDto(
+        => new(
             model.Id,
             model.AccountId,
             model.AccountNumber,
@@ -70,7 +67,7 @@ public static class HistoryOperationMappingExtensions
 
     public static InvoicePaymentReceivedHistoryOperationDto MapToDto(
         this InvoicePaymentReceivedBankHistoryOperationModel model)
-        => new InvoicePaymentReceivedHistoryOperationDto(
+        => new(
             model.Id,
             model.AccountId,
             model.AccountNumber,
@@ -79,7 +76,7 @@ public static class HistoryOperationMappingExtensions
             model.OccurredAt);
 
     public static InvoicePaymentSentHistoryOperationDto MapToDto(this InvoicePaymentSentBankHistoryOperationModel model)
-        => new InvoicePaymentSentHistoryOperationDto(
+        => new(
             model.Id,
             model.AccountId,
             model.AccountNumber,
@@ -88,7 +85,7 @@ public static class HistoryOperationMappingExtensions
             model.OccurredAt);
 
     public static InvoiceReceivedHistoryOperationDto MapToDto(this InvoiceReceivedBankHistoryOperationModel model)
-        => new InvoiceReceivedHistoryOperationDto(
+        => new(
             model.Id,
             model.AccountId,
             model.AccountNumber,
@@ -96,7 +93,7 @@ public static class HistoryOperationMappingExtensions
             model.OccurredAt);
 
     public static InvoiceRevokedHistoryOperationDto MapToDto(this InvoiceRevokedBankHistoryOperationModel model)
-        => new InvoiceRevokedHistoryOperationDto(
+        => new(
             model.Id,
             model.AccountId,
             model.AccountNumber,

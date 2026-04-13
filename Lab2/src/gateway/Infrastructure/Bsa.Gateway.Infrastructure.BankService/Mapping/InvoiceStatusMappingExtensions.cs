@@ -1,5 +1,4 @@
 ﻿using Bsa.Gateway.Application.Abstractions.Invoices.Models;
-using Google.Protobuf.Collections;
 
 namespace Bsa.Gateway.Infrastructure.BankService.Mapping;
 
@@ -26,13 +25,5 @@ public static class InvoiceStatusMappingExtensions
             BankInvoiceStatusModel.Revoked => ProtoInvoiceStatus.Revoked,
             _ => throw new ArgumentOutOfRangeException(nameof(model), model, "Incorrect status"),
         };
-    }
-
-    public static RepeatedField<ProtoInvoiceStatus> MapToProto(this IEnumerable<BankInvoiceStatusModel> models)
-    {
-        var repeatedField = new RepeatedField<ProtoInvoiceStatus>();
-        repeatedField.AddRange(models.Select(m => m.MapToProto()));
-
-        return repeatedField;
     }
 }

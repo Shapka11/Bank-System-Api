@@ -22,10 +22,6 @@ public sealed class GrpcExceptionMiddleware : IMiddleware
             {
                 httpStatusCode = HttpStatusCode.BadRequest;
             }
-            else if (e.StatusCode == StatusCode.DeadlineExceeded)
-            {
-                httpStatusCode = HttpStatusCode.RequestTimeout;
-            }
             else if (e.StatusCode == StatusCode.NotFound)
             {
                 httpStatusCode = HttpStatusCode.NotFound;
@@ -42,41 +38,13 @@ public sealed class GrpcExceptionMiddleware : IMiddleware
             {
                 httpStatusCode = HttpStatusCode.Unauthorized;
             }
-            else if (e.StatusCode == StatusCode.ResourceExhausted)
-            {
-                httpStatusCode = HttpStatusCode.TooManyRequests;
-            }
-            else if (e.StatusCode is StatusCode.FailedPrecondition or StatusCode.OutOfRange)
-            {
-                httpStatusCode = HttpStatusCode.BadRequest;
-            }
-            else if (e.StatusCode == StatusCode.Unimplemented)
-            {
-                httpStatusCode = HttpStatusCode.NotImplemented;
-            }
             else if (e.StatusCode == StatusCode.Internal)
             {
                 httpStatusCode = HttpStatusCode.InternalServerError;
             }
-            else if (e.StatusCode == StatusCode.Unavailable)
+            else if (e.StatusCode == StatusCode.FailedPrecondition)
             {
-                httpStatusCode = HttpStatusCode.BadGateway;
-            }
-            else if (e.StatusCode == StatusCode.Cancelled)
-            {
-                httpStatusCode = HttpStatusCode.RequestTimeout;
-            }
-            else if (e.StatusCode == StatusCode.Unknown)
-            {
-                httpStatusCode = HttpStatusCode.InternalServerError;
-            }
-            else if (e.StatusCode == StatusCode.Aborted)
-            {
-                httpStatusCode = HttpStatusCode.Conflict;
-            }
-            else if (e.StatusCode == StatusCode.DataLoss)
-            {
-                httpStatusCode = HttpStatusCode.ServiceUnavailable;
+                httpStatusCode = HttpStatusCode.BadRequest;
             }
             else
             {

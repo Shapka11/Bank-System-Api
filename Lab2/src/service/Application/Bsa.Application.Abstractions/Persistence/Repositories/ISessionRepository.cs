@@ -10,6 +10,4 @@ public interface ISessionRepository
     Task RemoveAsync(IReadOnlyCollection<SessionBase> sessions, CancellationToken cancellationToken);
 
     IAsyncEnumerable<SessionBase> QueryAsync(SessionQuery query, CancellationToken cancellationToken);
-
-    Task<SessionBase?> FindSessionByIdAsync(Guid sessionId, CancellationToken cancellationToken);
 }

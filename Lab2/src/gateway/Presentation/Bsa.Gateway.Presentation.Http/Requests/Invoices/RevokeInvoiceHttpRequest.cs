@@ -1,6 +1,6 @@
 ﻿namespace Bsa.Gateway.Presentation.Http.Requests.Invoices;
 
-public readonly record struct RevokeInvoiceHttpRequest
+public sealed class RevokeInvoiceHttpRequest
 {
     public required Guid SessionId { get; init; }
 

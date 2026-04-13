@@ -10,6 +10,4 @@ public interface IInvoiceRepository
     Task UpdateAsync(IReadOnlyCollection<Invoice> invoices, CancellationToken cancellationToken);
 
     IAsyncEnumerable<Invoice> QueryAsync(InvoiceQuery query, CancellationToken cancellationToken);
-
-    Task<Invoice?> FindById(InvoiceId id, CancellationToken cancellationToken);
 }

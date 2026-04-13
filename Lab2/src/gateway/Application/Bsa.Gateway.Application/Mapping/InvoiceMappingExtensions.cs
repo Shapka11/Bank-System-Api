@@ -6,7 +6,7 @@ namespace Bsa.Gateway.Application.Mapping;
 public static class InvoiceMappingExtensions
 {
     public static InvoiceDto MapToDto(this BankInvoiceModel model)
-        => new InvoiceDto(
+        => new(
             model.Id,
             model.SenderAccountNumber,
             model.ReceiverAccountNumber,
@@ -14,7 +14,4 @@ public static class InvoiceMappingExtensions
             model.Status.MapToDto(),
             model.CreatedAt,
             model.UpdatedAt);
-
-    public static IEnumerable<InvoiceDto> MapToDto(this IEnumerable<BankInvoiceModel> entities)
-        => entities.Select(MapToDto);
 }

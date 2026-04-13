@@ -122,6 +122,9 @@ public sealed class InvoiceController : InvoiceService.InvoiceServiceBase
             GetOutgoingInvoices.Response.AccountNotFound accountNotFound => throw new RpcException(new Status(
                 StatusCode.NotFound,
                 accountNotFound.Message)),
+            GetOutgoingInvoices.Response.Unauthorized unauthorized => throw new RpcException(new Status(
+                StatusCode.Unauthenticated,
+                unauthorized.ErrorMessage)),
             _ => throw new RpcException(new Status(StatusCode.Internal, "Unknown error")),
         };
     }
@@ -144,6 +147,9 @@ public sealed class InvoiceController : InvoiceService.InvoiceServiceBase
             GetIncomingInvoices.Response.AccountNotFound accountNotFound => throw new RpcException(new Status(
                 StatusCode.NotFound,
                 accountNotFound.Message)),
+            GetIncomingInvoices.Response.Unauthorized unauthorized => throw new RpcException(new Status(
+                StatusCode.Unauthenticated,
+                unauthorized.ErrorMessage)),
             _ => throw new RpcException(new Status(StatusCode.Internal, "Unknown error")),
         };
     }

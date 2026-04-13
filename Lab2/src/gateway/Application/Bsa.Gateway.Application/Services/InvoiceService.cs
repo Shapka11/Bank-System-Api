@@ -71,7 +71,7 @@ public sealed class InvoiceService : IInvoiceService
         var clientRequest = new GetOutgoingInvoices.Request(
             request.SessionId,
             request.ReceiverAccountNumbers,
-            request.Statuses.MapToBankModel(),
+            request.Statuses.Select(s => s.MapToBankModel()),
             request.PageSize,
             request.PageToken);
         GetOutgoingInvoices.Response clientResponse = await _invoiceClient
@@ -82,7 +82,9 @@ public sealed class InvoiceService : IInvoiceService
             GetOutgoingInvoices.Response.Failure failure
                 => new GetOutgoingInvoicesResponse.Failure(failure.ErrorMessage),
             GetOutgoingInvoices.Response.Success success
-                => new GetOutgoingInvoicesResponse.Success(success.Invoices.MapToDto(), success.PageToken),
+                => new GetOutgoingInvoicesResponse.Success(
+                    success.Invoices.Select(i => i.MapToDto()).ToArray(),
+                    success.PageToken),
             _ => throw new UnreachableException(),
         };
     }
@@ -94,7 +96,7 @@ public sealed class InvoiceService : IInvoiceService
         var clientRequest = new GetIncomingInvoices.Request(
             request.SessionId,
             request.SenderAccountNumbers,
-            request.Statuses.MapToBankModel(),
+            request.Statuses.Select(s => s.MapToBankModel()),
             request.PageSize,
             request.PageToken);
         GetIncomingInvoices.Response clientResponse = await _invoiceClient
@@ -105,7 +107,9 @@ public sealed class InvoiceService : IInvoiceService
             GetIncomingInvoices.Response.Failure failure
                 => new GetIncomingInvoicesResponse.Failure(failure.ErrorMessage),
             GetIncomingInvoices.Response.Success success
-                => new GetIncomingInvoicesResponse.Success(success.Invoices.MapToDto(), success.PageToken),
+                => new GetIncomingInvoicesResponse.Success(
+                    success.Invoices.Select(i => i.MapToDto()).ToArray(),
+                    success.PageToken),
             _ => throw new UnreachableException(),
         };
     }

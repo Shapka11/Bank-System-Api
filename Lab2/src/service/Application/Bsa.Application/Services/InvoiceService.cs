@@ -3,6 +3,7 @@ using Bsa.Application.Abstractions.Persistence.Queries;
 using Bsa.Application.Contracts.Invoices;
 using Bsa.Application.Contracts.Invoices.Operations;
 using Bsa.Application.Mapping;
+using Bsa.Application.Specifications;
 using Bsa.Domain.Accounts;
 using Bsa.Domain.Accounts.Results;
 using Bsa.Domain.HistoryOperations;
@@ -21,24 +22,33 @@ namespace Bsa.Application.Services;
 public sealed class InvoiceService : IInvoiceService
 {
     private readonly IPersistenceContext _context;
+    private readonly AccountSpecifications _accountSpecifications;
+    private readonly InvoiceSpecifications _invoiceSpecifications;
+    private readonly SessionSpecifications _sessionSpecifications;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IPersistenceTransactionProvider _transactionProvider;
 
     public InvoiceService(
         IPersistenceContext context,
         IDateTimeProvider dateTimeProvider,
-        IPersistenceTransactionProvider transactionProvider)
+        IPersistenceTransactionProvider transactionProvider,
+        AccountSpecifications accountSpecifications,
+        InvoiceSpecifications invoiceSpecifications,
+        SessionSpecifications sessionSpecifications)
     {
         _context = context;
         _dateTimeProvider = dateTimeProvider;
         _transactionProvider = transactionProvider;
+        _accountSpecifications = accountSpecifications;
+        _invoiceSpecifications = invoiceSpecifications;
+        _sessionSpecifications = sessionSpecifications;
     }
 
     public async Task<CreateInvoice.Response> CreateAsync(
         CreateInvoice.Request request,
         CancellationToken cancellationToken)
     {
-        SessionBase? session = await _context.SessionRepository.FindSessionByIdAsync(request.SessionId, cancellationToken);
+        SessionBase? session = await _sessionSpecifications.FindSessionByIdAsync(request.SessionId, cancellationToken);
         if (session is not UserSession userSession)
             return new CreateInvoice.Response.Unauthorized(request.SessionId, "Session not user");
 
@@ -51,9 +61,9 @@ public sealed class InvoiceService : IInvoiceService
             _dateTimeProvider.Current,
             _dateTimeProvider.Current);
 
-        Account? senderAccount = await _context.AccountsRepository
+        Account? senderAccount = await _accountSpecifications
             .FindAccountByNumberAsync(invoice.SenderAccountNumber, cancellationToken);
-        Account? receiverAccount = await _context.AccountsRepository
+        Account? receiverAccount = await _accountSpecifications
             .FindAccountByNumberAsync(invoice.ReceiverAccountNumber, cancellationToken);
 
         if (senderAccount is null)
@@ -97,12 +107,12 @@ public sealed class InvoiceService : IInvoiceService
         PayInvoice.Request request,
         CancellationToken cancellationToken)
     {
-        SessionBase? session = await _context.SessionRepository.FindSessionByIdAsync(request.SessionId, cancellationToken);
+        SessionBase? session = await _sessionSpecifications.FindSessionByIdAsync(request.SessionId, cancellationToken);
         if (session is not UserSession userSession)
             return new PayInvoice.Response.Unauthorized(request.SessionId, "Session not user");
 
         var invoiceId = new InvoiceId(request.InvoiceId);
-        Invoice? invoice = await _context.InvoiceRepository.FindById(invoiceId, cancellationToken);
+        Invoice? invoice = await _invoiceSpecifications.FindById(invoiceId, cancellationToken);
 
         if (invoice is null)
             return new PayInvoice.Response.InvoiceNotFound(invoiceId.Value);
@@ -111,9 +121,9 @@ public sealed class InvoiceService : IInvoiceService
         if (invoicePayResult is PayInvoiceResult.Failure)
             return new PayInvoice.Response.InvalidInvoiceState(invoice.State.State.ToString());
 
-        Account? senderAccount = await _context.AccountsRepository
+        Account? senderAccount = await _accountSpecifications
             .FindAccountByNumberAsync(invoice.SenderAccountNumber, cancellationToken);
-        Account? receiverAccount = await _context.AccountsRepository
+        Account? receiverAccount = await _accountSpecifications
             .FindAccountByNumberAsync(invoice.ReceiverAccountNumber, cancellationToken);
         if (receiverAccount is null)
             return new PayInvoice.Response.AccountNotFound(invoice.ReceiverAccountNumber.Value);
@@ -162,12 +172,12 @@ public sealed class InvoiceService : IInvoiceService
         RevokeInvoice.Request request,
         CancellationToken cancellationToken)
     {
-        SessionBase? session = await _context.SessionRepository.FindSessionByIdAsync(request.SessionId, cancellationToken);
+        SessionBase? session = await _sessionSpecifications.FindSessionByIdAsync(request.SessionId, cancellationToken);
         if (session is not UserSession userSession)
             return new RevokeInvoice.Response.Unauthorized(request.SessionId, "Session not user");
 
         var invoiceId = new InvoiceId(request.InvoiceId);
-        Invoice? invoice = await _context.InvoiceRepository.FindById(invoiceId, cancellationToken);
+        Invoice? invoice = await _invoiceSpecifications.FindById(invoiceId, cancellationToken);
 
         if (invoice is null)
             return new RevokeInvoice.Response.InvoiceNotFound(invoiceId.Value);
@@ -176,9 +186,9 @@ public sealed class InvoiceService : IInvoiceService
         if (invoiceRevokeResult is RevokeInvoiceResult.Failure failure)
             return new RevokeInvoice.Response.InvalidInvoiceState(failure.ErrorMessage);
 
-        Account? senderAccount = await _context.AccountsRepository
+        Account? senderAccount = await _accountSpecifications
             .FindAccountByNumberAsync(invoice.SenderAccountNumber, cancellationToken);
-        Account? receiverAccount = await _context.AccountsRepository
+        Account? receiverAccount = await _accountSpecifications
             .FindAccountByNumberAsync(invoice.ReceiverAccountNumber, cancellationToken);
         if (receiverAccount is null)
             return new RevokeInvoice.Response.AccountNotFound(invoice.ReceiverAccountNumber.Value);
@@ -218,7 +228,7 @@ public sealed class InvoiceService : IInvoiceService
         GetIncomingInvoices.Request request,
         CancellationToken cancellationToken)
     {
-        SessionBase? session = await _context.SessionRepository.FindSessionByIdAsync(request.SessionId, cancellationToken);
+        SessionBase? session = await _sessionSpecifications.FindSessionByIdAsync(request.SessionId, cancellationToken);
         if (session is not UserSession)
             return new GetIncomingInvoices.Response.Unauthorized(request.SessionId, "Session not user");
 
@@ -234,7 +244,7 @@ public sealed class InvoiceService : IInvoiceService
         var query = InvoiceQuery.Build(builder => builder
             .WithPageSize(request.PageSize)
             .WithInvoiceIdCursor(invoiceIdCursor)
-            .WithStatuses(request.Statuses.MapToDomain())
+            .WithStatuses(request.Statuses.Select(s => s.MapToDomain()))
             .WithSenderAccountNumbers(senderAccountNumbers));
 
         Invoice[] invoices = await _context.InvoiceRepository
@@ -245,13 +255,19 @@ public sealed class InvoiceService : IInvoiceService
             ? null
             : new GetIncomingInvoices.PageToken(invoices.Last().Id.Value);
 
-        return new GetIncomingInvoices.Response.Success(invoices.MapToDto(), responsePageToken);
+        return new GetIncomingInvoices.Response.Success(
+            invoices.Select(i => i.MapToDto()).ToArray(),
+            responsePageToken);
     }
 
     public async Task<GetOutgoingInvoices.Response> GetOutgoingAsync(
         GetOutgoingInvoices.Request request,
         CancellationToken cancellationToken)
     {
+        SessionBase? session = await _sessionSpecifications.FindSessionByIdAsync(request.SessionId, cancellationToken);
+        if (session is not UserSession)
+            return new GetOutgoingInvoices.Response.Unauthorized(request.SessionId, "Session not user");
+
         AccountNumber[] receiverAccountNumbers =
             request.ReceiverAccountNumbers
                 .Select(number => new AccountNumber(number))
@@ -264,7 +280,7 @@ public sealed class InvoiceService : IInvoiceService
         var query = InvoiceQuery.Build(builder => builder
             .WithPageSize(request.PageSize)
             .WithInvoiceIdCursor(invoiceIdCursor)
-            .WithStatuses(request.Statuses.MapToDomain())
+            .WithStatuses(request.Statuses.Select(s => s.MapToDomain()))
             .WithReceiverAccountNumbers(receiverAccountNumbers));
         Invoice[] invoices = await _context.InvoiceRepository
             .QueryAsync(query, cancellationToken)
@@ -274,6 +290,8 @@ public sealed class InvoiceService : IInvoiceService
             ? null
             : new GetOutgoingInvoices.PageToken(invoices.Last().Id.Value);
 
-        return new GetOutgoingInvoices.Response.Success(invoices.MapToDto(), responsePageToken);
+        return new GetOutgoingInvoices.Response.Success(
+            invoices.Select(i => i.MapToDto()).ToArray(),
+            responsePageToken);
     }
 }

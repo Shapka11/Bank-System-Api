@@ -12,7 +12,7 @@ public static class GetHistoryOperations
     {
         private Response() { }
 
-        public sealed record Success(IEnumerable<HistoryOperationDto> History, PageToken? PageToken) : Response;
+        public sealed record Success(IReadOnlyCollection<HistoryOperationDto> History, PageToken? PageToken) : Response;
 
         public sealed record Unauthorized(Guid SessionId, string ErrorMessage) : Response;
     }

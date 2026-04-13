@@ -10,6 +10,7 @@ public static class WebApplicationExtensions
         app.MapGrpcService<InvoiceController>();
         app.MapGrpcService<HistoryOperationController>();
         app.MapGrpcService<AdminController>();
+        app.MapGrpcService<UserController>();
         app.MapGrpcReflectionService();
     }
 }

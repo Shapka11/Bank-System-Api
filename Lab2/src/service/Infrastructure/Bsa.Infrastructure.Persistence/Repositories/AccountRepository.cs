@@ -1,7 +1,6 @@
 ﻿using Bsa.Application.Abstractions.Persistence.Repositories;
 using Bsa.Domain.Accounts;
 using Bsa.Domain.ValueObjects;
-using Bsa.Infrastructure.Persistence.Specifications;
 using Itmo.Dev.Platform.Persistence.Abstractions.Commands;
 using Itmo.Dev.Platform.Persistence.Abstractions.Connections;
 using System.Data;
@@ -114,32 +113,5 @@ public sealed class AccountRepository : IAccountRepository
                 reader.GetFieldValue<DateTimeOffset>("created_at"),
                 reader.GetFieldValue<DateTimeOffset>("updated_at"));
         }
-    }
-
-    public async Task<Account?> FindAccountByNumberAsync(AccountNumber number, CancellationToken cancellationToken)
-    {
-        const int pageSize = 1;
-        var query = AccountQuery.Build(builder => builder
-            .WithAccountNumber(number)
-            .WithPageSize(pageSize));
-
-        return await QueryAsync(query, cancellationToken).SingleOrDefaultAsync(cancellationToken);
-    }
-
-    public async Task<Account?> FindAccountByIdAsync(AccountId accountId, CancellationToken cancellationToken)
-    {
-        AccountQuery query = AccountSpecifications.ById(accountId);
-
-        return await QueryAsync(query, cancellationToken)
-            .SingleOrDefaultAsync(cancellationToken);
-    }
-
-    public IAsyncEnumerable<Account> FindAccountByNumberAsync(
-        IEnumerable<AccountNumber> accountNumbers,
-        CancellationToken cancellationToken)
-    {
-        AccountQuery query = AccountSpecifications.ByNumbers(accountNumbers);
-
-        return QueryAsync(query, cancellationToken);
     }
 }

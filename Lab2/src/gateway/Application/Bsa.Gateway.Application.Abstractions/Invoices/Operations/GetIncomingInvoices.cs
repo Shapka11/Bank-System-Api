@@ -15,7 +15,7 @@ public static class GetIncomingInvoices
     {
         private Response() { }
 
-        public sealed record Success(IEnumerable<BankInvoiceModel> Invoices, string? PageToken) : Response;
+        public sealed record Success(IReadOnlyCollection<BankInvoiceModel> Invoices, string? PageToken) : Response;
 
         public sealed record Failure(string ErrorMessage) : Response;
     }

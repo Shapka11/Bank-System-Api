@@ -1,5 +1,4 @@
 ﻿using Bsa.Application.Contracts.Invoices.Models;
-using Google.Protobuf.Collections;
 
 namespace Bsa.Presentation.Grpc.Mapping.Invoices;
 
@@ -27,7 +26,4 @@ public static class InvoiceStatusProtoMappingExtensions
             _ => throw new ArgumentOutOfRangeException(nameof(protoStatus), protoStatus, "Incorrect status"),
         };
     }
-
-    public static IEnumerable<InvoiceStatusDto> MapToDto(this RepeatedField<ProtoInvoiceStatus> protoStatuses)
-        => protoStatuses.Select(MapToDto);
 }

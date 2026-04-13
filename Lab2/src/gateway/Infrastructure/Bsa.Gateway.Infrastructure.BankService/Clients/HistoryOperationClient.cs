@@ -26,6 +26,8 @@ public sealed class HistoryOperationClient : IHistoryOperationClient
             clientRequest,
             cancellationToken: cancellationToken);
 
-        return new GetHistoryOperations.Response.Success(clientResponse.History.MapToModel(), clientResponse.PageToken);
+        return new GetHistoryOperations.Response.Success(
+            clientResponse.History.Select(h => h.MapToModel()).ToArray(),
+            clientResponse.PageToken);
     }
 }

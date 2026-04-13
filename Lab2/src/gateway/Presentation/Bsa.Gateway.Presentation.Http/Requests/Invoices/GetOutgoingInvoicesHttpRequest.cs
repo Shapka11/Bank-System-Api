@@ -3,16 +3,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Bsa.Gateway.Presentation.Http.Requests.Invoices;
 
-public readonly record struct GetOutgoingInvoicesHttpRequest()
+public sealed class GetOutgoingInvoicesHttpRequest()
 {
-    public required Guid SessionId { get; init; } = Guid.Empty;
+    public required Guid SessionId { get; init; }
 
     public string[] ReceiverAccountNumbers { get; init; } = [];
 
     public InvoiceStatusModel[] Statuses { get; init; } = [];
 
     [Range(minimum: 1, maximum: 1000)]
-    public int PageSize { get; init; } = 0;
+    public required int PageSize { get; init; }
 
-    public string? PageToken { get; init; } = null;
+    public string? PageToken { get; init; }
 }

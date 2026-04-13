@@ -10,7 +10,9 @@ public static class GetHistoryOperations
     {
         private Response() { }
 
-        public sealed record Success(IEnumerable<BankHistoryOperationModel> History, string? PageToken) : Response;
+        public sealed record Success(
+            IReadOnlyCollection<BankHistoryOperationModel> History,
+            string? PageToken) : Response;
 
         public sealed record Failure(string ErrorMessage) : Response;
     }

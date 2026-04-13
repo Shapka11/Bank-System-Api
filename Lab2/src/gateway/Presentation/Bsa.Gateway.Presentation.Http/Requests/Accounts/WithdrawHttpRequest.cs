@@ -1,6 +1,6 @@
 ﻿namespace Bsa.Gateway.Presentation.Http.Requests.Accounts;
 
-public readonly record struct WithdrawHttpRequest
+public sealed class WithdrawHttpRequest
 {
     public required Guid SessionId { get; init; }
 

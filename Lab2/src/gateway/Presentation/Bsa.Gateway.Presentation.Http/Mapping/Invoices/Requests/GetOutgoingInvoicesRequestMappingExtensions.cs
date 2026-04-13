@@ -9,7 +9,7 @@ public static class GetOutgoingInvoicesRequestMappingExtensions
         => new(
             httpRequest.SessionId,
             httpRequest.ReceiverAccountNumbers,
-            httpRequest.Statuses.MapToDto(),
+            httpRequest.Statuses.Select(s => s.MapToDto()),
             httpRequest.PageSize,
             httpRequest.PageToken);
 }

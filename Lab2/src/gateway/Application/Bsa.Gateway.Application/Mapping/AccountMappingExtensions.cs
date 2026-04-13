@@ -6,7 +6,7 @@ namespace Bsa.Gateway.Application.Mapping;
 public static class AccountMappingExtensions
 {
     public static AccountDto MapToDto(this BankAccountModel model)
-        => new AccountDto(
+        => new(
             model.Id,
             model.Number,
             model.Password,

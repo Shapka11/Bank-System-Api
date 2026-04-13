@@ -43,7 +43,7 @@ public sealed class HistoryOperationController : ControllerBase
             }),
             GetHistoryOperationsResponse.Success success => Ok(new GetHistoryHttpResponse
             {
-                History = success.History.MapToModel(),
+                History = success.History.Select(h => h.MapToModel()).ToArray(),
                 PageToken = success.PageToken,
             }),
             _ => throw new UnreachableException(),

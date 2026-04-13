@@ -17,7 +17,9 @@ public static class GetOutgoingInvoices
     {
         private Response() { }
 
-        public sealed record Success(IEnumerable<InvoiceDto> Invoices, PageToken? PageToken) : Response;
+        public sealed record Success(IReadOnlyCollection<InvoiceDto> Invoices, PageToken? PageToken) : Response;
+
+        public sealed record Unauthorized(Guid SessionId, string ErrorMessage) : Response;
 
         public sealed record InvalidStatus(string Message) : Response;
 

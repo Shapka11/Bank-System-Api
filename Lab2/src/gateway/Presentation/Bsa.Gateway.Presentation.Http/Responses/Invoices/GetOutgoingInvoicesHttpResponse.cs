@@ -4,7 +4,7 @@ namespace Bsa.Gateway.Presentation.Http.Responses.Invoices;
 
 public readonly record struct GetOutgoingInvoicesHttpResponse
 {
-    public required IEnumerable<InvoiceModel> Invoices { get; init; }
+    public required IReadOnlyCollection<InvoiceModel> Invoices { get; init; }
 
     public string? PageToken { get; init; }
 }

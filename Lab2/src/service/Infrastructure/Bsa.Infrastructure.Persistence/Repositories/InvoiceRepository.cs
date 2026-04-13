@@ -3,7 +3,6 @@ using Bsa.Application.Abstractions.Persistence.Repositories;
 using Bsa.Domain.Invoices;
 using Bsa.Domain.Invoices.States;
 using Bsa.Domain.ValueObjects;
-using Bsa.Infrastructure.Persistence.Specifications;
 using Itmo.Dev.Platform.Persistence.Abstractions.Commands;
 using Itmo.Dev.Platform.Persistence.Abstractions.Connections;
 using System.Data;
@@ -147,11 +146,5 @@ public sealed class InvoiceRepository : IInvoiceRepository
                 reader.GetFieldValue<DateTimeOffset>("created_at"),
                 reader.GetFieldValue<DateTimeOffset>("updated_at"));
         }
-    }
-
-    public async Task<Invoice?> FindById(InvoiceId id, CancellationToken cancellationToken)
-    {
-        InvoiceQuery query = InvoiceSpecifications.ById(id);
-        return await QueryAsync(query, cancellationToken).SingleOrDefaultAsync(cancellationToken);
     }
 }

@@ -26,9 +26,6 @@ public static class HistoryOperationMappingExtensions
         };
     }
 
-    public static IEnumerable<HistoryOperationModel> MapToModel(this IEnumerable<HistoryOperationDto> dtos)
-        => dtos.Select(MapToModel);
-
     public static CreateAccountHistoryOperationModel MapToModel(this CreateAccountHistoryOperationDto dto)
         => new(
             dto.Id,
