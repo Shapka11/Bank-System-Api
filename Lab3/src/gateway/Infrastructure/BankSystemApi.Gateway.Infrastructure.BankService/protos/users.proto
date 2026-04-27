@@ -1,0 +1,14 @@
+﻿syntax = "proto3";
+
+package bank_system_api;
+option csharp_namespace = "BankSystemApi.Grpc";
+
+import "google/protobuf/empty.proto";
+
+service UserService {
+  rpc Add(AddUserRequest) returns (google.protobuf.Empty);
+}
+
+message AddUserRequest {
+  string authorization_id = 1;
+}

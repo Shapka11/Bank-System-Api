@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+      <NoWarn>$(NoWarn);CA1506</NoWarn>
+    </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Domain\BankSystemApi.Domain\BankSystemApi.Domain.csproj" />
+    <ProjectReference Include="..\BankSystemApi.Application.Abstractions\BankSystemApi.Application.Abstractions.csproj" />
+    <ProjectReference Include="..\BankSystemApi.Application.Contracts\BankSystemApi.Application.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Itmo.Dev.Platform.Common" />
+    <PackageReference Include="Itmo.Dev.Platform.Persistence.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
+  </ItemGroup>
+</Project>

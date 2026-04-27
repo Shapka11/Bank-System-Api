@@ -1,0 +1,364 @@
+﻿using BankSystemApi.Application.Abstractions.Metrics;
+using BankSystemApi.Application.Abstractions.Persistence;
+using BankSystemApi.Application.Abstractions.Persistence.Queries;
+using BankSystemApi.Application.Contracts.Accounts;
+using BankSystemApi.Application.Contracts.Accounts.Operations;
+using BankSystemApi.Application.Mapping;
+using BankSystemApi.Application.Options;
+using BankSystemApi.Application.Specifications;
+using BankSystemApi.Domain.Accounts;
+using BankSystemApi.Domain.Accounts.Results;
+using BankSystemApi.Domain.HistoryOperations;
+using BankSystemApi.Domain.HistoryOperations.Accounts;
+using BankSystemApi.Domain.Users;
+using BankSystemApi.Domain.ValueObjects;
+using Itmo.Dev.Platform.Common.DateTime;
+using Itmo.Dev.Platform.Persistence.Abstractions.Transactions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System.Diagnostics;
+using IsolationLevel = System.Data.IsolationLevel;
+
+namespace BankSystemApi.Application.Services;
+
+public sealed partial class AccountService : IAccountService
+{
+    private static readonly ActivitySource ActivitySource =
+        new("BankSystemApi.Application.Services.AccountService");
+
+    private readonly IPersistenceContext _context;
+    private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly IPersistenceTransactionProvider _transactionProvider;
+    private readonly IOptionsMonitor<AccountOptions> _accountOptions;
+    private readonly ILogger<AccountService> _logger;
+    private readonly IServiceMetrics _metrics;
+
+    public AccountService(
+        IPersistenceContext context,
+        IDateTimeProvider dateTimeProvider,
+        IPersistenceTransactionProvider transactionProvider,
+        IOptionsMonitor<AccountOptions> accountOptions,
+        ILogger<AccountService> logger,
+        IServiceMetrics metrics)
+    {
+        _context = context;
+        _dateTimeProvider = dateTimeProvider;
+        _transactionProvider = transactionProvider;
+        _accountOptions = accountOptions;
+        _logger = logger;
+        _metrics = metrics;
+    }
+
+    public async Task<CreateAccount.Response> CreateAsync(
+        CreateAccount.Request request,
+        CancellationToken cancellationToken)
+    {
+        using Activity? activity = ActivitySource.StartActivity();
+        activity?.SetTag("user.id", request.TargetUserId);
+
+        User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.CallerUserId, cancellationToken);
+        if (user is null)
+        {
+            LogUnauthorizedAttempt(request.CallerUserId);
+            return new CreateAccount.Response.Unauthorized(request.CallerUserId.ToString());
+        }
+
+        User? targetUser = await _context.UserRepository
+            .FindByIdAsync(new UserId(request.TargetUserId), cancellationToken);
+        if (targetUser is null)
+        {
+            LogUnauthorizedAttempt(request.TargetUserId);
+            return new CreateAccount.Response.Unauthorized(request.TargetUserId.ToString());
+        }
+
+        int totalUsersAccount = await _context.AccountsRepository.GetTotalByUserId(targetUser.Id, cancellationToken);
+        if (totalUsersAccount == _accountOptions.CurrentValue.MaxAmount)
+        {
+            LogAccountLimit(targetUser.Id.Value, totalUsersAccount, _accountOptions.CurrentValue.MaxAmount);
+            return new CreateAccount.Response.ReachedAccountLimit("You have account amount limit");
+        }
+
+        Account? dbAccount = await _context.AccountsRepository
+            .FindAccountByNumberAsync(new AccountNumber(request.AccountNumber), cancellationToken);
+        if (dbAccount is not null)
+        {
+            LogAccountAlreadyExists(dbAccount.Id.Value);
+            return new CreateAccount.Response.AccountAlreadyExists(dbAccount.Number.Value);
+        }
+
+        var account = new Account(
+            AccountId.New,
+            targetUser.Id,
+            new AccountNumber(request.AccountNumber),
+            new Password(request.Password),
+            Money.Zero,
+            _dateTimeProvider.Current,
+            _dateTimeProvider.Current);
+
+        await using IPersistenceTransaction transaction = await _transactionProvider
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
+        await _context.AccountsRepository.AddAsync([account], cancellationToken);
+
+        HistoryOperation operation = new CreateAccountHistoryOperation(
+            HistoryOperationId.Default,
+            account.Id,
+            _dateTimeProvider.Current);
+
+        await _context.HistoryOperationsRepository
+            .AddAsync([operation], cancellationToken)
+            .FirstAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+
+        LogAccountCreated(account.Id.Value, targetUser.Id.Value);
+
+        _metrics.IncAccountCreated();
+
+        return new CreateAccount.Response.Success(account.MapToDto());
+    }
+
+    public async Task<Deposit.Response> DepositAsync(
+        Deposit.Request request,
+        CancellationToken cancellationToken)
+    {
+        using Activity? activity = ActivitySource.StartActivity();
+        activity?.SetTag("account.id", request.AccountId);
+        activity?.SetTag("user.id", request.UserId);
+
+        User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
+        if (user is null)
+        {
+            LogUnauthorizedAttempt(request.UserId);
+            return new Deposit.Response.Unauthorized(request.UserId);
+        }
+
+        var accountId = new AccountId(request.AccountId);
+        Account? account = await _context.AccountsRepository.FindAccountByIdAsync(accountId, cancellationToken);
+        if (account is null)
+        {
+            LogAccountNotFound(accountId.Value);
+            return new Deposit.Response.AccountNotFound(accountId.Value);
+        }
+
+        if (account.UserId != user.Id)
+        {
+            LogAccountAccessForbidden(account.Id.Value, user.Id.Value);
+            return new Deposit.Response.Forbidden("Account is not this users");
+        }
+
+        var depositTotal = new Money(request.Amount);
+        account.Deposit(depositTotal);
+        account.UpdateTime(_dateTimeProvider.Current);
+        HistoryOperation operation = new DepositHistoryOperation(
+            HistoryOperationId.Default,
+            account.Id,
+            depositTotal,
+            _dateTimeProvider.Current);
+
+        await using IPersistenceTransaction transaction = await _transactionProvider
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
+        await _context.AccountsRepository.UpdateAsync([account], cancellationToken);
+
+        await _context.HistoryOperationsRepository
+            .AddAsync([operation], cancellationToken)
+            .FirstAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+
+        LogDepositSuccess(account.Id.Value);
+
+        _metrics.IncAccountDeposit();
+
+        return new Deposit.Response.Success(account.MapToDto());
+    }
+
+    public async Task<Withdraw.Response> WithdrawAsync(
+        Withdraw.Request request,
+        CancellationToken cancellationToken)
+    {
+        using Activity? activity = ActivitySource.StartActivity();
+        activity?.SetTag("account.id", request.AccountId);
+        activity?.SetTag("user.id", request.UserId);
+
+        User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
+        if (user is null)
+        {
+            LogUnauthorizedAttempt(request.UserId);
+            return new Withdraw.Response.Unauthorized(request.UserId);
+        }
+
+        var accountId = new AccountId(request.AccountId);
+        Account? account = await _context.AccountsRepository.FindAccountByIdAsync(accountId, cancellationToken);
+        if (account is null)
+        {
+            LogAccountNotFound(accountId.Value);
+            return new Withdraw.Response.AccountNotFound(accountId.Value);
+        }
+
+        if (account.UserId != user.Id)
+        {
+            LogAccountAccessForbidden(account.Id.Value, user.Id.Value);
+            return new Withdraw.Response.Forbidden("Account is not this users");
+        }
+
+        var withdrawTotal = new Money(request.Amount);
+        WithdrawResult result = account.Withdraw(withdrawTotal);
+        if (result is WithdrawResult.Failure failure)
+        {
+            LogWithdrawFailure(account.Id.Value);
+            return new Withdraw.Response.InsufficientFunds(failure.ErrorMessage);
+        }
+
+        account.UpdateTime(_dateTimeProvider.Current);
+        HistoryOperation operation = new WithdrawHistoryOperation(
+            HistoryOperationId.Default,
+            account.Id,
+            withdrawTotal,
+            _dateTimeProvider.Current);
+
+        await using IPersistenceTransaction transaction = await _transactionProvider
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
+        await _context.AccountsRepository.UpdateAsync([account], cancellationToken);
+
+        await _context.HistoryOperationsRepository
+            .AddAsync([operation], cancellationToken)
+            .FirstAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+
+        LogWithdrawSuccess(account.Id.Value);
+
+        _metrics.IncAccountWithdrawal();
+
+        return new Withdraw.Response.Success(account.MapToDto());
+    }
+
+    public async Task<GetBalance.Response> GetBalanceAsync(
+        GetBalance.Request request,
+        CancellationToken cancellationToken)
+    {
+        using Activity? activity = ActivitySource.StartActivity();
+        activity?.SetTag("account.id", request.AccountId);
+        activity?.SetTag("user.id", request.UserId);
+
+        User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
+        if (user is null)
+        {
+            LogUnauthorizedAttempt(request.UserId);
+            return new GetBalance.Response.Unauthorized(request.UserId);
+        }
+
+        var accountId = new AccountId(request.AccountId);
+        Account? account = await _context.AccountsRepository.FindAccountByIdAsync(accountId, cancellationToken);
+        if (account is null)
+        {
+            LogAccountNotFound(accountId.Value);
+            return new GetBalance.Response.AccountNotFound(accountId.Value);
+        }
+
+        if (account.UserId != user.Id)
+        {
+            LogAccountAccessForbidden(account.Id.Value, user.Id.Value);
+            return new GetBalance.Response.Forbidden("Account is not this users");
+        }
+
+        var balance = new Money(account.Balance.Value);
+
+        HistoryOperation operation = new CheckBalanceHistoryOperation(
+            HistoryOperationId.Default,
+            account.Id,
+            account.Balance,
+            _dateTimeProvider.Current);
+
+        await _context.HistoryOperationsRepository
+            .AddAsync([operation], cancellationToken)
+            .FirstAsync(cancellationToken);
+
+        return new GetBalance.Response.Success(balance.Value);
+    }
+
+    public async Task<GetAccounts.Response> GetAsync(GetAccounts.Request request, CancellationToken cancellationToken)
+    {
+        using Activity? activity = ActivitySource.StartActivity();
+        activity?.SetTag("user.id", request.UserId);
+
+        User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
+        if (user is null)
+        {
+            LogUnauthorizedAttempt(request.UserId);
+            return new GetAccounts.Response.Unauthorized(request.UserId);
+        }
+
+        AccountId? idCursor = request.PageToken?.Id is not null
+            ? new AccountId(request.PageToken.Value.Id)
+            : null;
+
+        var query = AccountQuery.Build(builder => builder
+            .WithUserId(user.Id)
+            .WithPageSize(request.PageSize)
+            .WithAccountIdCursor(idCursor));
+
+        Account[] accounts = await _context.AccountsRepository
+            .QueryAsync(query, cancellationToken)
+            .ToArrayAsync(cancellationToken);
+
+        GetAccounts.PageToken? responsePageToken = accounts.Length < request.PageSize
+            ? null
+            : new GetAccounts.PageToken(accounts.Last().Id.Value);
+
+        return new GetAccounts.Response.Success(accounts.Select(a => a.MapToDto()).ToArray(), responsePageToken);
+    }
+
+    [LoggerMessage(
+        LogLevel.Warning,
+        "Account with id {AccountId} not found.")]
+    public partial void LogAccountNotFound(Guid accountId);
+
+    [LoggerMessage(
+        LogLevel.Warning,
+        "User {UserId} has reached the maximum allowed account limit ({CurrentCount}/{MaxCount}).")]
+    public partial void LogAccountLimit(long userId, long currentCount, long maxCount);
+
+    [LoggerMessage(
+        LogLevel.Warning,
+        "Account {AccountId} does to belong to the user {UserId}")]
+    public partial void LogAccountAccessForbidden(Guid accountId, long userId);
+
+    [LoggerMessage(
+        LogLevel.Information,
+        "Account {AccountId} created successfully for user {UserId}")]
+    public partial void LogAccountCreated(Guid accountId, long userId);
+
+    [LoggerMessage(
+        LogLevel.Warning,
+        "Account already exists: Id {accountId}.")]
+    public partial void LogAccountAlreadyExists(Guid accountId);
+
+    [LoggerMessage(
+        LogLevel.Information,
+        "Account {AccountId} successfully deposited")]
+    public partial void LogDepositSuccess(Guid accountId);
+
+    [LoggerMessage(
+        LogLevel.Warning,
+        "Account {AccountId} withdrawal failure")]
+    public partial void LogWithdrawFailure(Guid accountId);
+
+    [LoggerMessage(
+        LogLevel.Information,
+        "Account {AccountId} withdrawal successfully")]
+    public partial void LogWithdrawSuccess(Guid accountId);
+
+    [LoggerMessage(
+        LogLevel.Warning,
+        "Unauthorized access attempt: User ID '{UserId}' is not exist.")]
+    public partial void LogUnauthorizedAttempt(Guid userId);
+
+    [LoggerMessage(
+        LogLevel.Warning,
+        "Unauthorized access attempt: User ID '{UserId}' is not exist.")]
+    public partial void LogUnauthorizedAttempt(long userId);
+}

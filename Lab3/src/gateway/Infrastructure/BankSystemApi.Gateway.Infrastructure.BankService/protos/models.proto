@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package bank_system_api;
+option csharp_namespace = "BankSystemApi.Grpc";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "google/type/money.proto";
+
+
+message Account {
+  string id = 1;
+  int64 user_id = 2;
+  string number = 3;
+  string password = 4;
+  google.type.Money balance = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message Pagination {
+  int32 page_size = 3;
+  google.protobuf.StringValue page_token = 4;
+}
+
+message Invoice {
+  int64 id = 1;
+  string sender_account_id = 2;
+  string receiver_account_id = 3;
+  google.type.Money amount = 4;
+  InvoiceStatus status = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+enum InvoiceStatus {
+  INVOICE_STATUS_UNSPECIFIED = 0;
+  INVOICE_STATUS_CREATED = 1;
+  INVOICE_STATUS_PAID = 2;
+  INVOICE_STATUS_REVOKED = 3;
+}
+
+enum InvoiceType {
+  INVOICE_TYPE_UNSPECIFIED = 0;
+  INVOICE_TYPE_INCOMING = 1;
+  INVOICE_TYPE_OUTGOING = 2;
+}
+
+message HistoryOperation {
+  int64 id = 1;
+  string account_id = 2;
+  google.protobuf.Timestamp occurred_at = 4;
+
+  oneof operation_data {
+    CheckBalanceData check_balance = 5;
+    CreateAccountData create_account = 6;
+    DepositData deposit = 7;
+    WithdrawData withdraw = 8;
+    InvoiceIssuedData invoice_issued = 9;
+    InvoiceReceivedData invoice_received = 10;
+    InvoiceRevokedData invoice_revoked = 11;
+    InvoicePaymentReceivedData invoice_payment_received = 12;
+    InvoicePaymentSentData invoice_payment_sent = 13;
+  }
+  
+  message CheckBalanceData {
+    google.type.Money balance = 1;
+  }
+  
+  message CreateAccountData { }
+  
+  message DepositData {
+    google.type.Money amount = 1;
+  }
+  
+  message WithdrawData {
+    google.type.Money amount = 1;
+  }
+  
+  message InvoiceIssuedData {
+    int64 invoice_id = 1;
+  }
+  
+  message InvoiceReceivedData {
+    int64 invoice_id = 1;
+  }
+  
+  message InvoiceRevokedData {
+    int64 invoice_id = 1;
+  }
+  
+  message InvoicePaymentReceivedData {
+    google.type.Money amount = 1;
+    int64 invoice_id = 2;
+  }
+  
+  message InvoicePaymentSentData {
+    google.type.Money amount = 1;
+    int64 invoice_id = 2;
+  }
+}
