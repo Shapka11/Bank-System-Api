@@ -27,12 +27,25 @@
     - Реализация серверных Interceptor-ов (логирование времени исполнения, обработка ошибок).
     - Middleware для трансформации gRPC-исключений в HTTP-коды.
 
+### [Lab 3: Observability & Security](https://github.com/Shapka11/Bank-System-Api/tree/main/Lab3)
+**Цель:** Обеспечение безопасности системы и внедрение инструментов наблюдения (Observability).
+- **Безопасность:** Интеграция с Keycloak, авторизация через JWT-токены на гейтвее, разграничение прав (admin/user).
+- **Бизнес-логика:** Реализация привязки счетов к пользователям (ограничение — до 5 счетов), проверки принадлежности счета текущему пользователю.
+- **Observability:**
+  - **Logging:** Внедрение структурированного логирования.
+  - **Tracing:** Распределенный трейсинг с передачей `user_id` и `account_id` в качестве атрибутов спанов.
+  - **Metrics:** Сбор метрик по основным бизнес-операциям.
+- **Инфраструктура:** Оркестрация сервисов и визуализация телеметрии через .NET Aspire.
+- **Data Persistence:** Миграции данных, добавление constraint-ов на уровне БД, написание datafix-скриптов.
+
 ---
 
 ## Технологический стек
 * **Language:** .NET 10
 * **Database:** PostgreSQL
 * **API:** ASP.NET Core, gRPC, REST, OpenAPI
+* **Observability:** OpenTelemetry, .NET Aspire
+* **Security:** Keycloak, JWT
 * **Architecture:** Hexagonal
 
 ## Структура решения
@@ -40,12 +53,19 @@
 
 ```text
 ├── lab-1/
-│   ├── src/
-│   │   ├── service/        # Backend-сервис
-│   │   └── console-client/ # Интерактивный CLI-клиент
-│   └── docker-compose.yml
-└── lab-2/
-    ├── src/
-    │   ├── service/        # gRPC сервис
-    │   └── gateway/        # HTTP Gateway
-    └── docker-compose.yml
+│    ├── src/
+│    │   ├── service/        # Backend-сервис
+│    │   └── console-client/ # Интерактивный CLI-клиент
+│    └── docker-compose.yml
+│── lab-2/
+│    ├── src/
+│    │   ├── service/        # gRPC сервис
+│    │   └── gateway/        # HTTP Gateway
+│    └── docker-compose.yml
+└── lab-3/
+     ├── src/
+     │   ├── service/        # gRPC сервис с бизнес-логикой
+     │   ├── gateway/        # HTTP Gateway с авторизацией
+     │   └── app-host/       # Aspire оркестрация
+     └── sql/
+         └── datafix.sql     # Миграции данных
