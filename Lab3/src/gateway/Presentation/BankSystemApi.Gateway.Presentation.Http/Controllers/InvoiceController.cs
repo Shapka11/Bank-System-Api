@@ -131,7 +131,7 @@ public sealed class InvoiceController : ControllerBase
     [EndpointDescription("Returns a list of invoices issued by the specified account (sender).")]
     [ProducesResponseType<GetOutgoingInvoicesHttpResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.ProblemJson)]
-    public async Task<ActionResult<GetOutgoingInvoicesHttpResponse>> GetOutgoingInvoice(
+    public async Task<ActionResult<GetOutgoingInvoicesHttpResponse>> GetOutgoing(
         [FromQuery] GetOutgoingInvoicesHttpRequest httpRequest,
         CancellationToken cancellationToken)
     {
@@ -165,7 +165,7 @@ public sealed class InvoiceController : ControllerBase
     [EndpointDescription("Returns a list of invoices issued to the specified account (receiver).")]
     [ProducesResponseType<GetIncomingInvoicesHttpResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.ProblemJson)]
-    public async Task<ActionResult<GetIncomingInvoicesHttpResponse>> GetIncomingInvoice(
+    public async Task<ActionResult<GetIncomingInvoicesHttpResponse>> GetIncoming(
         [FromQuery] GetIncomingInvoicesHttpRequest httpRequest,
         CancellationToken cancellationToken)
     {

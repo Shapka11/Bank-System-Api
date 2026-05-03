@@ -9,6 +9,6 @@ public sealed class InvoiceStatusMappingPlugin : IPostgresDataSourcePlugin
 {
     public void Configure(NpgsqlDataSourceBuilder dataSource)
     {
-        dataSource.MapEnum<InvoiceStatus>("invoice_status", new NpgsqlNullNameTranslator());
+        dataSource.MapEnum<InvoiceStatus>("invoice_status", new NpgsqlSnakeCaseNameTranslator());
     }
 }

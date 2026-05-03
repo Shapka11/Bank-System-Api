@@ -59,14 +59,12 @@ public sealed class InvoiceRepository : IInvoiceRepository
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            InvoiceStatus status = Enum.Parse<InvoiceStatus>(reader.GetString("status"));
-
             yield return new Invoice(
                 new InvoiceId(reader.GetInt64("id")),
                 new AccountId(reader.GetGuid("sender_account_id")),
                 new AccountId(reader.GetGuid("receiver_account_id")),
                 new Money(reader.GetDecimal("amount")),
-                InvoiceStateFactory.Create(status),
+                InvoiceStateFactory.Create(reader.GetFieldValue<InvoiceStatus>("status")),
                 reader.GetFieldValue<DateTimeOffset>("created_at"),
                 reader.GetFieldValue<DateTimeOffset>("updated_at"));
         }
@@ -136,14 +134,12 @@ public sealed class InvoiceRepository : IInvoiceRepository
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            InvoiceStatus status = Enum.Parse<InvoiceStatus>(reader.GetString("status"));
-
             yield return new Invoice(
                 new InvoiceId(reader.GetInt64("id")),
                 new AccountId(reader.GetGuid("sender_account_id")),
                 new AccountId(reader.GetGuid("receiver_account_id")),
                 new Money(reader.GetDecimal("amount")),
-                InvoiceStateFactory.Create(status),
+                InvoiceStateFactory.Create(reader.GetFieldValue<InvoiceStatus>("status")),
                 reader.GetFieldValue<DateTimeOffset>("created_at"),
                 reader.GetFieldValue<DateTimeOffset>("updated_at"));
         }

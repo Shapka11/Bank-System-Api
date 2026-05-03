@@ -31,7 +31,7 @@ public sealed class HistoryOperationController : ControllerBase
     [EndpointDescription("Returns a paginated list of all account operations (deposits, withdrawals, transfers).")]
     [ProducesResponseType<GetHistoryHttpResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.ProblemJson)]
-    public async Task<ActionResult<GetHistoryHttpResponse>> GetHistory(
+    public async Task<ActionResult<GetHistoryHttpResponse>> Get(
         [FromQuery] GetHistoryHttpRequest httpRequest,
         CancellationToken cancellationToken)
     {

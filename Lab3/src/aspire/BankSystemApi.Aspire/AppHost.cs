@@ -4,10 +4,19 @@ Env.Load("../../../.env");
 
 IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
+int prometheusPort = int.Parse(builder.Configuration["PROMETHEUS_PORT"] ?? "9090");
 IResourceBuilder<ContainerResource> prometheus = builder
     .AddContainer("bank-system-prometheus", "prom/prometheus")
     .WithBindMount("../../../prometheus/prometheus.yml", "/etc/prometheus/prometheus.yml")
-    .WithHttpEndpoint(port: 9090, targetPort: 9090, name: "prometheus-ui");
+    .WithHttpEndpoint(port: prometheusPort, targetPort: prometheusPort, name: "prometheus-ui");
+
+int grafanaPort = int.Parse(builder.Configuration["GRAFANA_PORT"] ?? "3000");
+IResourceBuilder<ContainerResource> grafana = builder
+    .AddContainer("bank-system-grafana", "grafana/grafana:latest")
+    .WithHttpEndpoint(port: grafanaPort, targetPort: grafanaPort, name: "grafana-ui")
+    .WithEnvironment("PROMETHEUS_URL", $"http://{prometheus.Resource.Name}:{prometheusPort.ToString()}")
+    .WithBindMount("../../../grafana/provisioning", "/etc/grafana/provisioning")
+    .WaitFor(prometheus);
 
 IResourceBuilder<KeycloakResource> keycloak = builder
     .AddKeycloak("bank-keycloak")
@@ -42,7 +51,7 @@ IResourceBuilder<ProjectResource> service = builder
     .WithEnvironment(
         "Infrastructure:Persistence:Postgres:Password",
         postgres.Resource.PasswordParameter)
-    .WithEnvironment("USE_PROMETHEUS_METRICS", "true")
+    .WithEnvironment("USE_PROMETHEUS_METRICS", builder.Configuration["USE_PROMETHEUS_METRICS"])
     .WithHttpHealthCheck("/health");
 
 IResourceBuilder<ProjectResource> gateway = builder

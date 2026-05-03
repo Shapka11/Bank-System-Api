@@ -167,7 +167,7 @@ public sealed class AccountController : ControllerBase
     [EndpointDescription("Returns users accounts.")]
     [ProducesResponseType<GetAccountsResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.ProblemJson)]
-    public async Task<ActionResult<GetAccountsResponse>> GetAccount(
+    public async Task<ActionResult<GetAccountsResponse>> Get(
         [FromQuery] GetAccountsHttpRequest httpRequest,
         CancellationToken cancellationToken)
     {

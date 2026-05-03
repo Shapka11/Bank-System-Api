@@ -21,7 +21,7 @@ using IsolationLevel = System.Data.IsolationLevel;
 
 namespace BankSystemApi.Application.Services;
 
-public sealed partial class AccountService : IAccountService
+public sealed class AccountService : IAccountService
 {
     private static readonly ActivitySource ActivitySource =
         new("BankSystemApi.Application.Services.AccountService");
@@ -59,7 +59,7 @@ public sealed partial class AccountService : IAccountService
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.CallerUserId, cancellationToken);
         if (user is null)
         {
-            LogUnauthorizedAttempt(request.CallerUserId);
+            _logger.LogWarning("Unauthorized access attempt: User ID '{UserId}' is not exist.", request.CallerUserId);
             return new CreateAccount.Response.Unauthorized(request.CallerUserId.ToString());
         }
 
@@ -67,14 +67,18 @@ public sealed partial class AccountService : IAccountService
             .FindByIdAsync(new UserId(request.TargetUserId), cancellationToken);
         if (targetUser is null)
         {
-            LogUnauthorizedAttempt(request.TargetUserId);
+            _logger.LogWarning("Unauthorized access attempt: User ID '{UserId}' is not exist.", request.TargetUserId);
             return new CreateAccount.Response.Unauthorized(request.TargetUserId.ToString());
         }
 
         int totalUsersAccount = await _context.AccountsRepository.GetTotalByUserId(targetUser.Id, cancellationToken);
         if (totalUsersAccount == _accountOptions.CurrentValue.MaxAmount)
         {
-            LogAccountLimit(targetUser.Id.Value, totalUsersAccount, _accountOptions.CurrentValue.MaxAmount);
+            _logger.LogWarning(
+                "User {UserId} has reached the maximum allowed account limit ({CurrentCount}/{MaxCount}).",
+                targetUser.Id.Value,
+                totalUsersAccount,
+                _accountOptions.CurrentValue.MaxAmount);
             return new CreateAccount.Response.ReachedAccountLimit("You have account amount limit");
         }
 
@@ -82,7 +86,7 @@ public sealed partial class AccountService : IAccountService
             .FindAccountByNumberAsync(new AccountNumber(request.AccountNumber), cancellationToken);
         if (dbAccount is not null)
         {
-            LogAccountAlreadyExists(dbAccount.Id.Value);
+            _logger.LogWarning("Account already exists: Id {accountId}.", dbAccount.Id.Value);
             return new CreateAccount.Response.AccountAlreadyExists(dbAccount.Number.Value);
         }
 
@@ -111,7 +115,10 @@ public sealed partial class AccountService : IAccountService
 
         await transaction.CommitAsync(cancellationToken);
 
-        LogAccountCreated(account.Id.Value, targetUser.Id.Value);
+        _logger.LogInformation(
+            "Account {AccountId} created successfully for user {UserId}",
+            account.Id.Value,
+            targetUser.Id.Value);
 
         _metrics.IncAccountCreated();
 
@@ -129,7 +136,7 @@ public sealed partial class AccountService : IAccountService
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
         if (user is null)
         {
-            LogUnauthorizedAttempt(request.UserId);
+            _logger.LogWarning("Unauthorized access attempt: User ID '{UserId}' is not exist.", request.UserId);
             return new Deposit.Response.Unauthorized(request.UserId);
         }
 
@@ -137,13 +144,16 @@ public sealed partial class AccountService : IAccountService
         Account? account = await _context.AccountsRepository.FindAccountByIdAsync(accountId, cancellationToken);
         if (account is null)
         {
-            LogAccountNotFound(accountId.Value);
+            _logger.LogWarning("Account with id {AccountId} not found.", accountId.Value);
             return new Deposit.Response.AccountNotFound(accountId.Value);
         }
 
         if (account.UserId != user.Id)
         {
-            LogAccountAccessForbidden(account.Id.Value, user.Id.Value);
+            _logger.LogWarning(
+                "Account {AccountId} does to belong to the user {UserId}",
+                account.Id.Value,
+                user.Id.Value);
             return new Deposit.Response.Forbidden("Account is not this users");
         }
 
@@ -167,7 +177,7 @@ public sealed partial class AccountService : IAccountService
 
         await transaction.CommitAsync(cancellationToken);
 
-        LogDepositSuccess(account.Id.Value);
+        _logger.LogInformation("Account {AccountId} successfully deposited", account.Id.Value);
 
         _metrics.IncAccountDeposit();
 
@@ -185,7 +195,7 @@ public sealed partial class AccountService : IAccountService
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
         if (user is null)
         {
-            LogUnauthorizedAttempt(request.UserId);
+            _logger.LogWarning("Unauthorized access attempt: User ID '{UserId}' is not exist.", request.UserId);
             return new Withdraw.Response.Unauthorized(request.UserId);
         }
 
@@ -193,13 +203,16 @@ public sealed partial class AccountService : IAccountService
         Account? account = await _context.AccountsRepository.FindAccountByIdAsync(accountId, cancellationToken);
         if (account is null)
         {
-            LogAccountNotFound(accountId.Value);
+            _logger.LogWarning("Account with id {AccountId} not found.", accountId.Value);
             return new Withdraw.Response.AccountNotFound(accountId.Value);
         }
 
         if (account.UserId != user.Id)
         {
-            LogAccountAccessForbidden(account.Id.Value, user.Id.Value);
+            _logger.LogWarning(
+                "Account {AccountId} does to belong to the user {UserId}",
+                account.Id.Value,
+                user.Id.Value);
             return new Withdraw.Response.Forbidden("Account is not this users");
         }
 
@@ -207,7 +220,7 @@ public sealed partial class AccountService : IAccountService
         WithdrawResult result = account.Withdraw(withdrawTotal);
         if (result is WithdrawResult.Failure failure)
         {
-            LogWithdrawFailure(account.Id.Value);
+            _logger.LogWarning("Account {AccountId} withdrawal failure", account.Id.Value);
             return new Withdraw.Response.InsufficientFunds(failure.ErrorMessage);
         }
 
@@ -229,7 +242,7 @@ public sealed partial class AccountService : IAccountService
 
         await transaction.CommitAsync(cancellationToken);
 
-        LogWithdrawSuccess(account.Id.Value);
+        _logger.LogInformation("Account {AccountId} withdrawal successfully", account.Id.Value);
 
         _metrics.IncAccountWithdrawal();
 
@@ -247,7 +260,7 @@ public sealed partial class AccountService : IAccountService
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
         if (user is null)
         {
-            LogUnauthorizedAttempt(request.UserId);
+            _logger.LogWarning("Unauthorized access attempt: User ID '{UserId}' is not exist.", request.UserId);
             return new GetBalance.Response.Unauthorized(request.UserId);
         }
 
@@ -255,13 +268,16 @@ public sealed partial class AccountService : IAccountService
         Account? account = await _context.AccountsRepository.FindAccountByIdAsync(accountId, cancellationToken);
         if (account is null)
         {
-            LogAccountNotFound(accountId.Value);
+            _logger.LogWarning("Account with id {AccountId} not found.", accountId.Value);
             return new GetBalance.Response.AccountNotFound(accountId.Value);
         }
 
         if (account.UserId != user.Id)
         {
-            LogAccountAccessForbidden(account.Id.Value, user.Id.Value);
+            _logger.LogWarning(
+                "Account {AccountId} does to belong to the user {UserId}",
+                account.Id.Value,
+                user.Id.Value);
             return new GetBalance.Response.Forbidden("Account is not this users");
         }
 
@@ -288,7 +304,7 @@ public sealed partial class AccountService : IAccountService
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
         if (user is null)
         {
-            LogUnauthorizedAttempt(request.UserId);
+            _logger.LogWarning("Unauthorized access attempt: User ID '{UserId}' is not exist.", request.UserId);
             return new GetAccounts.Response.Unauthorized(request.UserId);
         }
 
@@ -311,54 +327,4 @@ public sealed partial class AccountService : IAccountService
 
         return new GetAccounts.Response.Success(accounts.Select(a => a.MapToDto()).ToArray(), responsePageToken);
     }
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Account with id {AccountId} not found.")]
-    public partial void LogAccountNotFound(Guid accountId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "User {UserId} has reached the maximum allowed account limit ({CurrentCount}/{MaxCount}).")]
-    public partial void LogAccountLimit(long userId, long currentCount, long maxCount);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Account {AccountId} does to belong to the user {UserId}")]
-    public partial void LogAccountAccessForbidden(Guid accountId, long userId);
-
-    [LoggerMessage(
-        LogLevel.Information,
-        "Account {AccountId} created successfully for user {UserId}")]
-    public partial void LogAccountCreated(Guid accountId, long userId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Account already exists: Id {accountId}.")]
-    public partial void LogAccountAlreadyExists(Guid accountId);
-
-    [LoggerMessage(
-        LogLevel.Information,
-        "Account {AccountId} successfully deposited")]
-    public partial void LogDepositSuccess(Guid accountId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Account {AccountId} withdrawal failure")]
-    public partial void LogWithdrawFailure(Guid accountId);
-
-    [LoggerMessage(
-        LogLevel.Information,
-        "Account {AccountId} withdrawal successfully")]
-    public partial void LogWithdrawSuccess(Guid accountId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Unauthorized access attempt: User ID '{UserId}' is not exist.")]
-    public partial void LogUnauthorizedAttempt(Guid userId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Unauthorized access attempt: User ID '{UserId}' is not exist.")]
-    public partial void LogUnauthorizedAttempt(long userId);
 }

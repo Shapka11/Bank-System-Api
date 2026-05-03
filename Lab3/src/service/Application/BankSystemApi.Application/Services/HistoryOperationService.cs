@@ -12,7 +12,7 @@ using OperationHistoryQuery = BankSystemApi.Application.Abstractions.Persistence
 
 namespace BankSystemApi.Application.Services;
 
-public sealed partial class HistoryOperationService : IHistoryOperationService
+public sealed class HistoryOperationService : IHistoryOperationService
 {
     private static readonly ActivitySource ActivitySource =
         new("BankSystemApi.Application.Services.HistoryOperationService");
@@ -37,7 +37,7 @@ public sealed partial class HistoryOperationService : IHistoryOperationService
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
         if (user is null)
         {
-            LogUnauthorizedAttempt(request.UserId);
+            _logger.LogWarning("Unauthorized access attempt: User ID '{UserId}' is not exist.", request.UserId);
             return new GetHistoryOperations.Response.Unauthorized(request.UserId);
         }
 
@@ -45,13 +45,16 @@ public sealed partial class HistoryOperationService : IHistoryOperationService
         Account? account = await _context.AccountsRepository.FindAccountByIdAsync(accountId, cancellationToken);
         if (account is null)
         {
-            LogAccountNotFound(accountId.Value);
+            _logger.LogWarning("Account with id {AccountId} not found.", accountId.Value);
             return new GetHistoryOperations.Response.AccountNotFound(accountId.Value);
         }
 
         if (account.UserId != user.Id)
         {
-            LogAccountAccessForbidden(accountId.Value, user.Id.Value);
+            _logger.LogWarning(
+                "Account {AccountId} does to belong to the user {UserId}",
+                accountId.Value,
+                user.Id.Value);
             return new GetHistoryOperations.Response.Forbidden("Account is not this users");
         }
 
@@ -76,19 +79,4 @@ public sealed partial class HistoryOperationService : IHistoryOperationService
             history.Select(h => h.MapToDto()).ToArray(),
             responsePageToken);
     }
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Unauthorized access attempt: User ID '{UserId}' is not exist.")]
-    public partial void LogUnauthorizedAttempt(Guid userId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Account with id {AccountId} not found.")]
-    public partial void LogAccountNotFound(Guid accountId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Account {AccountId} does to belong to the user {UserId}")]
-    public partial void LogAccountAccessForbidden(Guid accountId, long userId);
 }

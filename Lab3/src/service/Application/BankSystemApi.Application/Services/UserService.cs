@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BankSystemApi.Application.Services;
 
-public sealed partial class UserService : IUserService
+public sealed class UserService : IUserService
 {
     private readonly IPersistenceContext _context;
     private readonly IDateTimeProvider _dateTimeProvider;
@@ -27,7 +27,9 @@ public sealed partial class UserService : IUserService
             .FindByAuthorizationIdAsync(request.AuthorizationId, cancellationToken);
         if (user is not null)
         {
-            LogUnauthorizedAttempt(request.AuthorizationId);
+            _logger.LogWarning(
+                "Unauthorized access attempt: User ID '{UserId}' is not exist.",
+                request.AuthorizationId);
             return new AddUser.Response.Success();
         }
 
@@ -35,18 +37,8 @@ public sealed partial class UserService : IUserService
 
         await _context.UserRepository.TryAddAsync([user], cancellationToken);
 
-        LogUserAddedSuccess(user.AuthorizationId);
+        _logger.LogInformation("User {UserId} successfully added", user.AuthorizationId);
 
         return new AddUser.Response.Success();
     }
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Unauthorized access attempt: User ID '{UserId}' is not exist.")]
-    public partial void LogUnauthorizedAttempt(Guid userId);
-
-    [LoggerMessage(
-        LogLevel.Information,
-        "User {UserId} successfully added")]
-    public partial void LogUserAddedSuccess(Guid userId);
 }

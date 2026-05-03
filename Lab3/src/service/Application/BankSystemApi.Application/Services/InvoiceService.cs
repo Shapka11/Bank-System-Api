@@ -59,7 +59,7 @@ public sealed partial class InvoiceService : IInvoiceService
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
         if (user is null)
         {
-            LogUnauthorizedAttempt(request.UserId);
+            _logger.LogWarning("Unauthorized access attempt: User ID '{UserId}' is not exist.", request.UserId);
             return new CreateInvoice.Response.Unauthorized(request.UserId);
         }
 
@@ -76,13 +76,16 @@ public sealed partial class InvoiceService : IInvoiceService
             .FindAccountByIdAsync(invoice.SenderAccountId, cancellationToken);
         if (senderAccount is null)
         {
-            LogAccountNotFound(invoice.SenderAccountId.Value);
+            _logger.LogWarning("Account with id {AccountId} not found.", invoice.SenderAccountId.Value);
             return new CreateInvoice.Response.SenderAccountNotFound(invoice.SenderAccountId.Value);
         }
 
         if (user.Id != senderAccount.UserId)
         {
-            LogAccountAccessForbidden(senderAccount.Id.Value, user.Id.Value);
+            _logger.LogWarning(
+                "Account {AccountId} does to belong to the user {UserId}",
+                senderAccount.Id.Value,
+                user.Id.Value);
             return new CreateInvoice.Response.Forbidden("The sender's account is not yours");
         }
 
@@ -90,7 +93,7 @@ public sealed partial class InvoiceService : IInvoiceService
             .FindAccountByIdAsync(invoice.ReceiverAccountId, cancellationToken);
         if (receiverAccount is null)
         {
-            LogAccountNotFound(invoice.ReceiverAccountId.Value);
+            _logger.LogWarning("Account with id {AccountId} not found.", invoice.ReceiverAccountId.Value);
             return new CreateInvoice.Response.ReceiverAccountNotFound(invoice.ReceiverAccountId.Value);
         }
 
@@ -119,7 +122,7 @@ public sealed partial class InvoiceService : IInvoiceService
 
         await transaction.CommitAsync(cancellationToken);
 
-        LogInvoiceCreated(invoice.Id.Value);
+        _logger.LogInformation("Invoice {InvoiceId} created successfully", invoice.Id.Value);
 
         _metrics.IncInvoiceCreated();
 
@@ -136,7 +139,7 @@ public sealed partial class InvoiceService : IInvoiceService
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
         if (user is null)
         {
-            LogUnauthorizedAttempt(request.UserId);
+            _logger.LogWarning("Unauthorized access attempt: User ID '{UserId}' is not exist.", request.UserId);
             return new PayInvoice.Response.Unauthorized(request.UserId);
         }
 
@@ -145,14 +148,14 @@ public sealed partial class InvoiceService : IInvoiceService
 
         if (invoice is null)
         {
-            LogInvoiceNotFound(invoiceId.Value);
+            _logger.LogWarning("Invoice {InvoiceId} not found", invoiceId.Value);
             return new PayInvoice.Response.InvoiceNotFound(invoiceId.Value);
         }
 
         PayInvoiceResult invoicePayResult = invoice.Pay();
         if (invoicePayResult is PayInvoiceResult.Failure)
         {
-            LogInvoicePayFailed(invoiceId.Value);
+            _logger.LogWarning("Invoice {InvoiceId} attempt pay failed", invoiceId.Value);
             return new PayInvoice.Response.InvalidInvoiceState(invoice.State.State.ToString());
         }
 
@@ -160,13 +163,16 @@ public sealed partial class InvoiceService : IInvoiceService
             .FindAccountByIdAsync(invoice.SenderAccountId, cancellationToken);
         if (senderAccount is null)
         {
-            LogAccountNotFound(invoice.SenderAccountId.Value);
+            _logger.LogWarning("Account with id {AccountId} not found.", invoice.SenderAccountId.Value);
             return new PayInvoice.Response.AccountNotFound(invoice.SenderAccountId.Value);
         }
 
         if (user.Id != senderAccount.UserId)
         {
-            LogAccountAccessForbidden(senderAccount.Id.Value, user.Id.Value);
+            _logger.LogWarning(
+                "Account {AccountId} does to belong to the user {UserId}",
+                senderAccount.Id.Value,
+                user.Id.Value);
             return new PayInvoice.Response.Forbidden("The sender's account is not yours");
         }
 
@@ -174,7 +180,7 @@ public sealed partial class InvoiceService : IInvoiceService
             .FindAccountByIdAsync(invoice.ReceiverAccountId, cancellationToken);
         if (receiverAccount is null)
         {
-            LogAccountNotFound(invoice.ReceiverAccountId.Value);
+            _logger.LogWarning("Account with id {AccountId} not found.", invoice.ReceiverAccountId.Value);
             return new PayInvoice.Response.AccountNotFound(invoice.ReceiverAccountId.Value);
         }
 
@@ -214,7 +220,7 @@ public sealed partial class InvoiceService : IInvoiceService
 
         await transaction.CommitAsync(cancellationToken);
 
-        LogInvoiceCreated(invoice.Id.Value);
+        _logger.LogInformation("Invoice {InvoiceId} paid successfully", invoice.Id.Value);
 
         _metrics.IncInvoicePaid();
 
@@ -231,7 +237,7 @@ public sealed partial class InvoiceService : IInvoiceService
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
         if (user is null)
         {
-            LogUnauthorizedAttempt(request.UserId);
+            _logger.LogWarning("Unauthorized access attempt: User ID '{UserId}' is not exist.", request.UserId);
             return new RevokeInvoice.Response.Unauthorized(request.UserId);
         }
 
@@ -239,14 +245,14 @@ public sealed partial class InvoiceService : IInvoiceService
         Invoice? invoice = await _context.InvoiceRepository.FindById(invoiceId, cancellationToken);
         if (invoice is null)
         {
-            LogInvoiceNotFound(invoiceId.Value);
+            _logger.LogWarning("Invoice {InvoiceId} not found", invoiceId.Value);
             return new RevokeInvoice.Response.InvoiceNotFound(invoiceId.Value);
         }
 
         RevokeInvoiceResult invoiceRevokeResult = invoice.Revoke();
         if (invoiceRevokeResult is RevokeInvoiceResult.Failure failure)
         {
-            LogInvoiceRevokeFailed(invoiceId.Value);
+            _logger.LogWarning("Invoice {InvoiceId} attempt revoke failed", invoiceId.Value);
             return new RevokeInvoice.Response.InvalidInvoiceState(failure.ErrorMessage);
         }
 
@@ -254,13 +260,16 @@ public sealed partial class InvoiceService : IInvoiceService
             .FindAccountByIdAsync(invoice.SenderAccountId, cancellationToken);
         if (senderAccount is null)
         {
-            LogAccountNotFound(invoice.SenderAccountId.Value);
+            _logger.LogWarning("Account with id {AccountId} not found.", invoice.SenderAccountId.Value);
             return new RevokeInvoice.Response.AccountNotFound(invoice.SenderAccountId.Value);
         }
 
         if (user.Id != senderAccount.UserId)
         {
-            LogAccountAccessForbidden(senderAccount.Id.Value, user.Id.Value);
+            _logger.LogWarning(
+                "Account {AccountId} does to belong to the user {UserId}",
+                senderAccount.Id.Value,
+                user.Id.Value);
             return new RevokeInvoice.Response.Forbidden("The sender's account is not yours");
         }
 
@@ -268,7 +277,7 @@ public sealed partial class InvoiceService : IInvoiceService
             .FindAccountByIdAsync(invoice.ReceiverAccountId, cancellationToken);
         if (receiverAccount is null)
         {
-            LogAccountNotFound(invoice.ReceiverAccountId.Value);
+            _logger.LogWarning("Account with id {AccountId} not found.", invoice.ReceiverAccountId.Value);
             return new RevokeInvoice.Response.AccountNotFound(invoice.ReceiverAccountId.Value);
         }
 
@@ -295,7 +304,7 @@ public sealed partial class InvoiceService : IInvoiceService
 
         await transaction.CommitAsync(cancellationToken);
 
-        LogInvoiceCreated(invoice.Id.Value);
+        _logger.LogInformation("Invoice {InvoiceId} revoked successfully", invoice.Id.Value);
 
         _metrics.IncInvoiceRevoked();
 
@@ -312,7 +321,7 @@ public sealed partial class InvoiceService : IInvoiceService
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
         if (user is null)
         {
-            LogUnauthorizedAttempt(request.UserId);
+            _logger.LogWarning("Unauthorized access attempt: User ID '{UserId}' is not exist.", request.UserId);
             return new GetInvoices.Response.Unauthorized(request.UserId);
         }
 
@@ -354,41 +363,6 @@ public sealed partial class InvoiceService : IInvoiceService
             invoices.Select(i => i.MapToDto()).ToArray(),
             responsePageToken);
     }
-
-    [LoggerMessage(
-        LogLevel.Information,
-        "Invoice {InvoiceId} created successfully")]
-    public partial void LogInvoiceCreated(long invoiceId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Invoice {InvoiceId} not found")]
-    public partial void LogInvoiceNotFound(long invoiceId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Invoice {InvoiceId} attempt pay failed")]
-    public partial void LogInvoicePayFailed(long invoiceId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Invoice {InvoiceId} attempt revoke failed")]
-    public partial void LogInvoiceRevokeFailed(long invoiceId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Unauthorized access attempt: User ID '{UserId}' is not exist.")]
-    public partial void LogUnauthorizedAttempt(Guid userId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Account with id {AccountId} not found.")]
-    public partial void LogAccountNotFound(Guid accountId);
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Account {AccountId} does to belong to the user {UserId}")]
-    public partial void LogAccountAccessForbidden(Guid accountId, long userId);
 
     [LoggerMessage(
         LogLevel.Warning,
