@@ -38,8 +38,6 @@ public sealed class AccountController : ControllerBase
     {
         string callerUserId = User.GetUserId();
 
-        Activity.Current.AddUserIdBaggage(callerUserId);
-
         CreateAccountResponse response = await _accountService.CreateAsync(
             httpRequest.MapToApplication(callerUserId, targetUserId),
             cancellationToken);
@@ -70,9 +68,6 @@ public sealed class AccountController : ControllerBase
         CancellationToken cancellationToken)
     {
         string userId = User.GetUserId();
-
-        Activity.Current.AddUserIdBaggage(userId);
-        Activity.Current.AddAccountIdBaggage(httpRequest.AccountId);
 
         DepositResponse response = await _accountService.DepositAsync(
             httpRequest.MapToApplication(userId),
@@ -105,9 +100,6 @@ public sealed class AccountController : ControllerBase
     {
         string userId = User.GetUserId();
 
-        Activity.Current.AddUserIdBaggage(userId);
-        Activity.Current.AddAccountIdBaggage(httpRequest.AccountId);
-
         WithdrawResponse response = await _accountService.WithdrawAsync(
             httpRequest.MapToApplication(userId),
             cancellationToken);
@@ -139,9 +131,6 @@ public sealed class AccountController : ControllerBase
     {
         string userId = User.GetUserId();
 
-        Activity.Current.AddUserIdBaggage(userId);
-        Activity.Current.AddAccountIdBaggage(httpRequest.AccountId);
-
         GetBalanceResponse response = await _accountService.GetBalanceAsync(
             httpRequest.MapToApplication(userId),
             cancellationToken);
@@ -172,8 +161,6 @@ public sealed class AccountController : ControllerBase
         CancellationToken cancellationToken)
     {
         string userId = User.GetUserId();
-
-        Activity.Current.AddUserIdBaggage(userId);
 
         GetAccountsResponse response = await _accountService.GetAccountAsync(
             httpRequest.MapToApplication(userId),

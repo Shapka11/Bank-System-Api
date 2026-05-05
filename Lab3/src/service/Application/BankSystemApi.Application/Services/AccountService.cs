@@ -1,6 +1,7 @@
 ﻿using BankSystemApi.Application.Abstractions.Metrics;
 using BankSystemApi.Application.Abstractions.Persistence;
 using BankSystemApi.Application.Abstractions.Persistence.Queries;
+using BankSystemApi.Application.Activities;
 using BankSystemApi.Application.Contracts.Accounts;
 using BankSystemApi.Application.Contracts.Accounts.Operations;
 using BankSystemApi.Application.Mapping;
@@ -23,9 +24,6 @@ namespace BankSystemApi.Application.Services;
 
 public sealed class AccountService : IAccountService
 {
-    private static readonly ActivitySource ActivitySource =
-        new("BankSystemApi.Application.Services.AccountService");
-
     private readonly IPersistenceContext _context;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IPersistenceTransactionProvider _transactionProvider;
@@ -53,7 +51,7 @@ public sealed class AccountService : IAccountService
         CreateAccount.Request request,
         CancellationToken cancellationToken)
     {
-        using Activity? activity = ActivitySource.StartActivity();
+        using Activity? activity = AccountServiceActivity.ActivitySource.StartActivity();
         activity?.SetTag("user.id", request.TargetUserId);
 
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.CallerUserId, cancellationToken);
@@ -129,7 +127,7 @@ public sealed class AccountService : IAccountService
         Deposit.Request request,
         CancellationToken cancellationToken)
     {
-        using Activity? activity = ActivitySource.StartActivity();
+        using Activity? activity = AccountServiceActivity.ActivitySource.StartActivity();
         activity?.SetTag("account.id", request.AccountId);
         activity?.SetTag("user.id", request.UserId);
 
@@ -188,7 +186,7 @@ public sealed class AccountService : IAccountService
         Withdraw.Request request,
         CancellationToken cancellationToken)
     {
-        using Activity? activity = ActivitySource.StartActivity();
+        using Activity? activity = AccountServiceActivity.ActivitySource.StartActivity();
         activity?.SetTag("account.id", request.AccountId);
         activity?.SetTag("user.id", request.UserId);
 
@@ -253,7 +251,7 @@ public sealed class AccountService : IAccountService
         GetBalance.Request request,
         CancellationToken cancellationToken)
     {
-        using Activity? activity = ActivitySource.StartActivity();
+        using Activity? activity = AccountServiceActivity.ActivitySource.StartActivity();
         activity?.SetTag("account.id", request.AccountId);
         activity?.SetTag("user.id", request.UserId);
 
@@ -298,7 +296,7 @@ public sealed class AccountService : IAccountService
 
     public async Task<GetAccounts.Response> GetAsync(GetAccounts.Request request, CancellationToken cancellationToken)
     {
-        using Activity? activity = ActivitySource.StartActivity();
+        using Activity? activity = AccountServiceActivity.ActivitySource.StartActivity();
         activity?.SetTag("user.id", request.UserId);
 
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);

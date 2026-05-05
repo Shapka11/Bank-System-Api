@@ -1,4 +1,5 @@
 ﻿using BankSystemApi.Application.Abstractions.Persistence;
+using BankSystemApi.Application.Activities;
 using BankSystemApi.Application.Contracts.HistoryOperations;
 using BankSystemApi.Application.Contracts.HistoryOperations.Operations;
 using BankSystemApi.Application.Mapping;
@@ -14,9 +15,6 @@ namespace BankSystemApi.Application.Services;
 
 public sealed class HistoryOperationService : IHistoryOperationService
 {
-    private static readonly ActivitySource ActivitySource =
-        new("BankSystemApi.Application.Services.HistoryOperationService");
-
     private readonly IPersistenceContext _context;
     private readonly ILogger<HistoryOperationService> _logger;
 
@@ -30,7 +28,7 @@ public sealed class HistoryOperationService : IHistoryOperationService
         GetHistoryOperations.Request request,
         CancellationToken cancellationToken)
     {
-        using Activity? activity = ActivitySource.StartActivity();
+        using Activity? activity = HistoryOperationServiceActivity.ActivitySource.StartActivity();
         activity?.SetTag("account.id", request.AccountId);
         activity?.SetTag("user.id", request.UserId);
 

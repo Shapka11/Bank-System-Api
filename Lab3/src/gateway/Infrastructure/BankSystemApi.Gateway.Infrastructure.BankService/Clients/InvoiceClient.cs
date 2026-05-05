@@ -1,8 +1,11 @@
 ﻿using BankSystemApi.Gateway.Application.Abstractions.Invoices;
 using BankSystemApi.Gateway.Application.Abstractions.Invoices.Operations;
+using BankSystemApi.Gateway.Infrastructure.BankService.Activities;
+using BankSystemApi.Gateway.Infrastructure.BankService.Extensions;
 using BankSystemApi.Gateway.Infrastructure.BankService.Mapping;
 using BankSystemApi.Grpc;
 using Google.Type;
+using System.Diagnostics;
 
 namespace BankSystemApi.Gateway.Infrastructure.BankService.Clients;
 
@@ -19,6 +22,9 @@ public sealed class InvoiceClient : IInvoiceClient
         CreateInvoice.Request request,
         CancellationToken cancellationToken)
     {
+        using Activity? activity = InvoiceClientActivity.ActivitySource.StartActivity();
+        activity.AddUserIdBaggage(request.UserId);
+
         var clientRequest = new ProtoCreateInvoiceRequest(
             request.UserId.ToString(),
             request.SenderAccountId.ToString(),
@@ -34,6 +40,10 @@ public sealed class InvoiceClient : IInvoiceClient
 
     public async Task<PayInvoice.Response> PayAsync(PayInvoice.Request request, CancellationToken cancellationToken)
     {
+        using Activity? activity = InvoiceClientActivity.ActivitySource.StartActivity();
+        activity.AddUserIdBaggage(request.UserId);
+        activity.AddInvoiceIdBaggage(request.InvoiceId);
+
         var clientRequest = new ProtoPayInvoiceRequest(request.UserId.ToString(), request.InvoiceId);
 
         ProtoPayInvoiceResponse clientResponse = await _invoiceClient.PayInvoiceAsync(
@@ -47,6 +57,10 @@ public sealed class InvoiceClient : IInvoiceClient
         RevokeInvoice.Request request,
         CancellationToken cancellationToken)
     {
+        using Activity? activity = InvoiceClientActivity.ActivitySource.StartActivity();
+        activity.AddUserIdBaggage(request.UserId);
+        activity.AddInvoiceIdBaggage(request.InvoiceId);
+
         var clientRequest = new ProtoRevokeInvoiceRequest(
             request.UserId.ToString(),
             request.InvoiceId);
@@ -62,6 +76,9 @@ public sealed class InvoiceClient : IInvoiceClient
         GetOutgoingInvoices.Request request,
         CancellationToken cancellationToken)
     {
+        using Activity? activity = InvoiceClientActivity.ActivitySource.StartActivity();
+        activity.AddUserIdBaggage(request.UserId);
+
         var clientRequest = new ProtoGetInvoicesRequest(
             request.UserId.ToString(),
             request.ReceiverAccountIds.Select(rai => rai.ToString()),
@@ -82,6 +99,9 @@ public sealed class InvoiceClient : IInvoiceClient
         GetIncomingInvoices.Request request,
         CancellationToken cancellationToken)
     {
+        using Activity? activity = InvoiceClientActivity.ActivitySource.StartActivity();
+        activity.AddUserIdBaggage(request.UserId);
+
         var clientRequest = new ProtoGetInvoicesRequest(
             request.UserId.ToString(),
             request.SenderAccountIds.Select(sai => sai.ToString()),

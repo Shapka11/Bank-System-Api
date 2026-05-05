@@ -1,5 +1,6 @@
 ﻿using BankSystemApi.Application.Abstractions.Metrics;
 using BankSystemApi.Application.Abstractions.Persistence;
+using BankSystemApi.Application.Activities;
 using BankSystemApi.Application.Contracts.Invoices;
 using BankSystemApi.Application.Contracts.Invoices.Models;
 using BankSystemApi.Application.Contracts.Invoices.Operations;
@@ -23,11 +24,8 @@ using InvoiceQuery = BankSystemApi.Application.Abstractions.Persistence.Queries.
 
 namespace BankSystemApi.Application.Services;
 
-public sealed partial class InvoiceService : IInvoiceService
+public sealed class InvoiceService : IInvoiceService
 {
-    private static readonly ActivitySource ActivitySource =
-        new("BankSystemApi.Application.Services.InvoiceService");
-
     private readonly IPersistenceContext _context;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IPersistenceTransactionProvider _transactionProvider;
@@ -52,7 +50,7 @@ public sealed partial class InvoiceService : IInvoiceService
         CreateInvoice.Request request,
         CancellationToken cancellationToken)
     {
-        using Activity? activity = ActivitySource.StartActivity();
+        using Activity? activity = InvoiceServiceActivity.ActivitySource.StartActivity();
         activity?.SetTag("account.id", request.SenderAccountId);
         activity?.SetTag("user.id", request.UserId);
 
@@ -133,8 +131,9 @@ public sealed partial class InvoiceService : IInvoiceService
         PayInvoice.Request request,
         CancellationToken cancellationToken)
     {
-        using Activity? activity = ActivitySource.StartActivity();
+        using Activity? activity = InvoiceServiceActivity.ActivitySource.StartActivity();
         activity?.SetTag("user.id", request.UserId);
+        activity?.SetTag("invoice.id", request.InvoiceId);
 
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
         if (user is null)
@@ -196,7 +195,7 @@ public sealed partial class InvoiceService : IInvoiceService
 
         if (withdrawResult is WithdrawResult.Failure failure)
         {
-            LogWithdrawFailure(receiverAccount.Id.Value);
+            _logger.LogWarning("Account {AccountId} withdrawal failur", receiverAccount.Id.Value);
             return new PayInvoice.Response.WithdrawalError(receiverAccount.Id.Value, failure.ErrorMessage);
         }
 
@@ -231,8 +230,9 @@ public sealed partial class InvoiceService : IInvoiceService
         RevokeInvoice.Request request,
         CancellationToken cancellationToken)
     {
-        using Activity? activity = ActivitySource.StartActivity();
+        using Activity? activity = InvoiceServiceActivity.ActivitySource.StartActivity();
         activity?.SetTag("user.id", request.UserId);
+        activity?.SetTag("invoice.id", request.InvoiceId);
 
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
         if (user is null)
@@ -315,7 +315,7 @@ public sealed partial class InvoiceService : IInvoiceService
         GetInvoices.Request request,
         CancellationToken cancellationToken)
     {
-        using Activity? activity = ActivitySource.StartActivity();
+        using Activity? activity = InvoiceServiceActivity.ActivitySource.StartActivity();
         activity?.SetTag("user.id", request.UserId);
 
         User? user = await _context.UserRepository.FindByAuthorizationIdAsync(request.UserId, cancellationToken);
@@ -363,9 +363,4 @@ public sealed partial class InvoiceService : IInvoiceService
             invoices.Select(i => i.MapToDto()).ToArray(),
             responsePageToken);
     }
-
-    [LoggerMessage(
-        LogLevel.Warning,
-        "Account {AccountId} withdrawal failure")]
-    public partial void LogWithdrawFailure(Guid accountId);
 }

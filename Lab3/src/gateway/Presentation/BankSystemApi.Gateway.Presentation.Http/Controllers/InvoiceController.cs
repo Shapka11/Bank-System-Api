@@ -38,8 +38,6 @@ public sealed class InvoiceController : ControllerBase
     {
         string userId = User.GetUserId();
 
-        Activity.Current.AddUserIdBaggage(userId);
-
         CreateInvoiceResponse response = await _invoiceService.CreateAsync(
             httpRequest.MapToApplication(userId),
             cancellationToken);
@@ -70,8 +68,6 @@ public sealed class InvoiceController : ControllerBase
         CancellationToken cancellationToken)
     {
         string userId = User.GetUserId();
-
-        Activity.Current.AddUserIdBaggage(userId);
 
         PayInvoiceResponse response = await _invoiceService.PayAsync(
             httpRequest.MapToApplication(userId),
@@ -104,8 +100,6 @@ public sealed class InvoiceController : ControllerBase
     {
         string userId = User.GetUserId();
 
-        Activity.Current.AddUserIdBaggage(userId);
-
         RevokeInvoiceResponse response = await _invoiceService.RevokeAsync(
             httpRequest.MapToApplication(userId),
             cancellationToken);
@@ -136,8 +130,6 @@ public sealed class InvoiceController : ControllerBase
         CancellationToken cancellationToken)
     {
         string userId = User.GetUserId();
-
-        Activity.Current.AddUserIdBaggage(userId);
 
         GetOutgoingInvoicesResponse response = await _invoiceService.GetOutgoingAsync(
             httpRequest.MapToApplication(userId),
@@ -170,8 +162,6 @@ public sealed class InvoiceController : ControllerBase
         CancellationToken cancellationToken)
     {
         string userId = User.GetUserId();
-
-        Activity.Current.AddUserIdBaggage(userId);
 
         GetIncomingInvoicesResponse response = await _invoiceService.GetIncomingAsync(
             httpRequest.MapToApplication(userId),

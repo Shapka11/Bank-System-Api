@@ -37,9 +37,6 @@ public sealed class HistoryOperationController : ControllerBase
     {
         string userId = User.GetUserId();
 
-        Activity.Current.AddUserIdBaggage(userId);
-        Activity.Current.AddAccountIdBaggage(httpRequest.AccountId);
-
         GetHistoryOperationsResponse response = await _historyOperationService.GetAsync(
             httpRequest.MapToApplication(userId),
             cancellationToken);

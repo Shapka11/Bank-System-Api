@@ -61,7 +61,7 @@
     <PackageVersion Include="SourceKit.Analyzers.Properties" Version="1.0.52" />
     <PackageVersion Include="Itmo.Dev.Editorconfig" Version="1.0.14" />
     <PackageVersion Include="SourceKit.Generators.Builder" Version="1.2.54" />
-    <PackageVersion Include="SourceKit.Generators.Grpc" Version="1.0.58" />
+    <PackageVersion Include="SourceKit.Generators.Grpc" Version="1.0.59" />
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.1.5" />
     <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.7" />

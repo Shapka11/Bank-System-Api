@@ -1,8 +1,11 @@
 ﻿using BankSystemApi.Gateway.Application.Abstractions.Accounts;
 using BankSystemApi.Gateway.Application.Abstractions.Accounts.Operations;
+using BankSystemApi.Gateway.Infrastructure.BankService.Activities;
+using BankSystemApi.Gateway.Infrastructure.BankService.Extensions;
 using BankSystemApi.Gateway.Infrastructure.BankService.Mapping;
 using BankSystemApi.Grpc;
 using Google.Type;
+using System.Diagnostics;
 
 namespace BankSystemApi.Gateway.Infrastructure.BankService.Clients;
 
@@ -19,6 +22,9 @@ public sealed class AccountClient : IAccountClient
         CreateAccount.Request request,
         CancellationToken cancellationToken)
     {
+        using Activity? activity = AccountClientActivity.ActivitySource.StartActivity();
+        activity.AddUserIdBaggage(request.CallerUserId);
+
         var clientRequest = new ProtoCreateAccountRequest(
             request.CallerUserId.ToString(),
             request.TargetUserId,
@@ -34,6 +40,10 @@ public sealed class AccountClient : IAccountClient
 
     public async Task<Deposit.Response> DepositAsync(Deposit.Request request, CancellationToken cancellationToken)
     {
+        using Activity? activity = AccountClientActivity.ActivitySource.StartActivity();
+        activity.AddUserIdBaggage(request.UserId);
+        activity.AddAccountIdBaggage(request.AccountId);
+
         var clientRequest = new ProtoDepositRequest(
             request.UserId.ToString(),
             request.AccountId.ToString(),
@@ -48,6 +58,10 @@ public sealed class AccountClient : IAccountClient
 
     public async Task<Withdraw.Response> WithdrawAsync(Withdraw.Request request, CancellationToken cancellationToken)
     {
+        using Activity? activity = AccountClientActivity.ActivitySource.StartActivity();
+        activity.AddUserIdBaggage(request.UserId);
+        activity.AddAccountIdBaggage(request.AccountId);
+
         var clientRequest = new ProtoWithdrawRequest(
             request.UserId.ToString(),
             request.AccountId.ToString(),
@@ -64,6 +78,10 @@ public sealed class AccountClient : IAccountClient
         GetBalance.Request request,
         CancellationToken cancellationToken)
     {
+        using Activity? activity = AccountClientActivity.ActivitySource.StartActivity();
+        activity.AddUserIdBaggage(request.UserId);
+        activity.AddAccountIdBaggage(request.AccountId);
+
         var clientRequest = new ProtoGetBalanceRequest(request.UserId.ToString(), request.AccountId.ToString());
 
         ProtoGetBalanceResponse clientResponse = await _accountClient.GetBalanceAsync(
@@ -75,6 +93,9 @@ public sealed class AccountClient : IAccountClient
 
     public async Task<GetAccounts.Response> GetAsync(GetAccounts.Request request, CancellationToken cancellationToken)
     {
+        using Activity? activity = AccountClientActivity.ActivitySource.StartActivity();
+        activity.AddUserIdBaggage(request.UserId);
+
         var clientRequest = new ProtoGetAccountsRequest(
             request.UserId.ToString(),
             new ProtoPagination(request.PageSize, request.PageToken));
