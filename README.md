@@ -22,10 +22,10 @@
 - **Бизнес-логика:** Расширение домена модулем "Инвойсы" (Invoice).
 - **Persistence:** Использование `Itmo.Dev.Platform` для абстракций хранения данных.
 - **Продвинутые фичи:**
-    - Пагинация всех коллекций (page token).
-    - Работа с `jsonb` в PostgreSQL через миграции.
-    - Реализация серверных Interceptor-ов (логирование времени исполнения, обработка ошибок).
-    - Middleware для трансформации gRPC-исключений в HTTP-коды.
+  - Пагинация всех коллекций (page token).
+  - Работа с `jsonb` в PostgreSQL через миграции.
+  - Реализация серверных Interceptor-ов (логирование времени исполнения, обработка ошибок).
+  - Middleware для трансформации gRPC-исключений в HTTP-коды.
 
 ### [Lab 3: Observability & Security](https://github.com/Shapka11/Bank-System-Api/tree/main/Lab3)
 **Цель:** Обеспечение безопасности системы и внедрение инструментов наблюдения (Observability).
@@ -38,6 +38,16 @@
 - **Инфраструктура:** Оркестрация сервисов и визуализация телеметрии через .NET Aspire.
 - **Data Persistence:** Миграции данных, добавление constraint-ов на уровне БД, написание datafix-скриптов.
 
+### [Lab 4: Testing](https://github.com/Shapka11/Bank-System-Api/tree/main/Lab4)
+**Цель:** Обеспечение надежности системы через полное покрытие модульными и интеграционными тестами.
+- **Модульное тестирование (Unit Tests):**
+  - Покрытие слоев бизнес-логики с использованием моков инфраструктуры (`Moq`).
+  - Проверка позитивных и негативных сценариев, включая проверки инфраструктурных инвариантов.
+- **Интеграционное тестирование (Integration Tests):**
+  - Использование реалистичного окружения без моков: настоящая БД в Docker (`TestContainers`) и in-memory сервер (`WebApplicationFactory`).
+  - Полное покрытие репозиториев (особое внимание сериализации/десериализации `jsonb`).
+  - E2E тестирование основных эндпоинтов (создание счёта, пополнение/снятие, полный флоу работы с инвойсами).
+
 ---
 
 ## Технологический стек
@@ -46,6 +56,7 @@
 * **API:** ASP.NET Core, gRPC, REST, OpenAPI
 * **Observability:** OpenTelemetry, .NET Aspire
 * **Security:** Keycloak, JWT
+* **Testing:** xUnit, Moq, FluentAssertions, TestContainers, WebApplicationFactory
 * **Architecture:** Hexagonal
 
 ## Структура решения
@@ -57,15 +68,21 @@
 │    │   ├── service/        # Backend-сервис
 │    │   └── console-client/ # Интерактивный CLI-клиент
 │    └── docker-compose.yml
-│── lab-2/
+├── lab-2/
 │    ├── src/
 │    │   ├── service/        # gRPC сервис
 │    │   └── gateway/        # HTTP Gateway
 │    └── docker-compose.yml
-└── lab-3/
+├── lab-3/
+│    ├── src/
+│    │   ├── service/        # gRPC сервис с бизнес-логикой
+│    │   ├── gateway/        # HTTP Gateway с авторизацией
+│    │   └── aspire/         # Aspire оркестрация
+│    └── sql/
+│        └── datafix.sql     # Миграции данных
+└── lab-4/
      ├── src/
-     │   ├── service/        # gRPC сервис с бизнес-логикой
-     │   ├── gateway/        # HTTP Gateway с авторизацией
-     │   └── app-host/       # Aspire оркестрация
-     └── sql/
-         └── datafix.sql     # Миграции данных
+     │   └── ...             # Исходный код сервисов и гейтвея
+     └── tests/
+         ├── UnitTests/      # Модульные тесты (Moq + xUnit)
+         └── IntegrTests/    # Интеграционные тесты (TestContainers)
