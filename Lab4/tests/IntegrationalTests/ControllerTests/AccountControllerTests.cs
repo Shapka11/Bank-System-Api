@@ -27,7 +27,10 @@ public sealed class AccountControllerTests : IAsyncDisposable
     private readonly IOptionsMonitor<AccountOptions> _accountOptionsMonitor;
     private readonly AccountService.AccountServiceClient _accountServiceClient;
 
-    private readonly Faker _faker = new();
+    private readonly Faker _faker = new()
+    {
+        Random = new Randomizer(42),
+    };
 
     public AccountControllerTests(WebApplicationFixture fixture)
     {

@@ -11,34 +11,27 @@ using Microsoft.Extensions.DependencyInjection;
 namespace IntegrationalTests.RepositoryTests;
 
 [Collection(nameof(WebApplicationCollectionFixture))]
-public sealed class HistoryOperationRepositoryTests : IAsyncDisposable
+public sealed class HistoryOperationRepositoryTests : BaseRepositoryTests
 {
-    private readonly AsyncServiceScope _scope;
     private readonly IHistoryOperationRepository _historyOperationRepository;
 
-    public HistoryOperationRepositoryTests(WebApplicationFixture fixture)
+    public HistoryOperationRepositoryTests(WebApplicationFixture fixture) : base(fixture)
     {
-        _scope = fixture.Services.CreateAsyncScope();
-        _historyOperationRepository = _scope.ServiceProvider.GetRequiredService<IHistoryOperationRepository>();
+        _historyOperationRepository = Scope.ServiceProvider.GetRequiredService<IHistoryOperationRepository>();
     }
 
-    public static IEnumerable<object[]> GetHistoryOperations()
+    public static TheoryData<HistoryOperation> GetHistoryOperations() => new()
     {
-        yield return new object[] { new AutoFaker<CreateAccountHistoryOperation>().Generate() };
-        yield return new object[] { new AutoFaker<DepositHistoryOperation>().Generate() };
-        yield return new object[] { new AutoFaker<WithdrawHistoryOperation>().Generate() };
-        yield return new object[] { new AutoFaker<CheckBalanceHistoryOperation>().Generate() };
-        yield return new object[] { new AutoFaker<InvoiceIssuedHistoryOperation>().Generate() };
-        yield return new object[] { new AutoFaker<InvoicePaymentSentHistoryOperation>().Generate() };
-        yield return new object[] { new AutoFaker<InvoicePaymentReceivedHistoryOperation>().Generate() };
-        yield return new object[] { new AutoFaker<InvoiceReceivedHistoryOperation>().Generate() };
-        yield return new object[] { new AutoFaker<InvoiceRevokedHistoryOperation>().Generate() };
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _scope.DisposeAsync();
-    }
+        new AutoFaker<CreateAccountHistoryOperation>().Generate(),
+        new AutoFaker<DepositHistoryOperation>().Generate(),
+        new AutoFaker<WithdrawHistoryOperation>().Generate(),
+        new AutoFaker<CheckBalanceHistoryOperation>().Generate(),
+        new AutoFaker<InvoiceIssuedHistoryOperation>().Generate(),
+        new AutoFaker<InvoicePaymentSentHistoryOperation>().Generate(),
+        new AutoFaker<InvoicePaymentReceivedHistoryOperation>().Generate(),
+        new AutoFaker<InvoiceReceivedHistoryOperation>().Generate(),
+        new AutoFaker<InvoiceRevokedHistoryOperation>().Generate(),
+    };
 
     [Theory]
     [MemberData(nameof(GetHistoryOperations))]

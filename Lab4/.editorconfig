@@ -577,7 +577,7 @@ dotnet_style_allow_statement_immediately_after_block_experimental = true:silent
 csharp_style_prefer_utf8_string_literals = true:suggestion
 
 # ReSharper
-resharper_csharp_empty_block_style = together_same_line
+resharper_csharp_empty_block_style = together
 
 csharp_wrap_arguments_style = chop_if_long
 csharp_wrap_chained_method_calls = chop_if_long
@@ -605,5 +605,6 @@ dotnet_diagnostic.SA1629.severity = none
 dotnet_diagnostic.SA1602.severity = none
 dotnet_diagnostic.SA1615.severity = none
 dotnet_diagnostic.SA1618.severity = none
+dotnet_diagnostic.SA1206.severity = none
 
 resharper_braces_redundant = false

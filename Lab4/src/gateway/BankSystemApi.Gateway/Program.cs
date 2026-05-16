@@ -3,7 +3,6 @@ using BankSystemApi.Gateway.Infrastructure.BankService.Extensions;
 using BankSystemApi.Gateway.Middlewares;
 using BankSystemApi.Gateway.Presentation.Http.Extensions;
 using Extensions;
-using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Enrichers.ActivityTags;
 using Serilog.Enrichers.Span;
@@ -60,15 +59,15 @@ app.UseSwaggerUI(swagger =>
 });
 
 app.MapOpenApi();
-app.MapScalarApiReference();
 
 app.UseRouting();
+
+app.UseMiddleware<GrpcExceptionMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.UsePresentationHttp();
-app.UseMiddleware<GrpcExceptionMiddleware>();
 
 app.MapDefaultEndpoints();
 

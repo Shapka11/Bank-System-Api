@@ -28,7 +28,10 @@ public sealed class InvoiceControllerTests : IAsyncDisposable
     private readonly IInvoiceRepository _invoiceRepository;
     private readonly InvoiceService.InvoiceServiceClient _invoiceServiceClient;
 
-    private readonly Faker _faker = new();
+    private readonly Faker _faker = new()
+    {
+        Random = new Randomizer(42),
+    };
 
     public InvoiceControllerTests(WebApplicationFixture fixture)
     {

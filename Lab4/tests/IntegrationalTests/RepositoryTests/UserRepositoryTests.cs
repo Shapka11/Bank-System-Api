@@ -10,20 +10,13 @@ using Microsoft.Extensions.DependencyInjection;
 namespace IntegrationalTests.RepositoryTests;
 
 [Collection(nameof(WebApplicationCollectionFixture))]
-public sealed class UserRepositoryTests : IAsyncDisposable
+public sealed class UserRepositoryTests : BaseRepositoryTests
 {
-    private readonly AsyncServiceScope _scope;
     private readonly IUserRepository _userRepository;
 
-    public UserRepositoryTests(WebApplicationFixture fixture)
+    public UserRepositoryTests(WebApplicationFixture fixture) : base(fixture)
     {
-        _scope = fixture.Services.CreateAsyncScope();
-        _userRepository = _scope.ServiceProvider.GetRequiredService<IUserRepository>();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _scope.DisposeAsync();
+        _userRepository = Scope.ServiceProvider.GetRequiredService<IUserRepository>();
     }
 
     [Fact]
