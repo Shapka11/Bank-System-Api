@@ -20,8 +20,9 @@ using User = BankSystemApi.Domain.Users.User;
 namespace IntegrationalTests.ControllerTests;
 
 [Collection(nameof(WebApplicationCollectionFixture))]
-public sealed class AccountControllerTests : IAsyncDisposable
+public sealed class AccountControllerTests : IAsyncLifetime
 {
+    private readonly WebApplicationFixture _fixture;
     private readonly AsyncServiceScope _scope;
     private readonly IUserRepository _userRepository;
     private readonly IAccountRepository _accountRepository;
@@ -35,6 +36,7 @@ public sealed class AccountControllerTests : IAsyncDisposable
 
     public AccountControllerTests(WebApplicationFixture fixture)
     {
+        _fixture = fixture;
         _scope = fixture.Services.CreateAsyncScope();
         _userRepository = _scope.ServiceProvider.GetRequiredService<IUserRepository>();
         _accountRepository = _scope.ServiceProvider.GetRequiredService<IAccountRepository>();
@@ -42,7 +44,13 @@ public sealed class AccountControllerTests : IAsyncDisposable
         _accountServiceClient = new AccountService.AccountServiceClient(fixture.CreateChannel());
     }
 
-    public async ValueTask DisposeAsync()
+    // Добавлено ключевое слово async
+    public async Task InitializeAsync()
+    {
+        await _fixture.ResetDatabaseAsync();
+    }
+
+    public async Task DisposeAsync()
     {
         await _scope.DisposeAsync();
     }

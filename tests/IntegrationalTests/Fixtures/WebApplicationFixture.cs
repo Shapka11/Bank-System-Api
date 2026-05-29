@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using Respawn;
 using Testcontainers.PostgreSql;
 
 namespace IntegrationalTests.Fixtures;
@@ -15,12 +16,15 @@ public sealed class WebApplicationFixture : IAsyncLifetime
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:latest").Build();
 
     private WebApplicationFactory<Program>? _webApplicationFactory;
+    private Respawner? _respawner;
 
     public WebApplicationFactory<Program> Factory =>
         _webApplicationFactory ??
         throw new InvalidOperationException("The factory has not yet been initialized. Wait for InitializeAsync().");
 
     public IServiceProvider Services => Factory.Services;
+
+    private static readonly string[] RespawnOptions = new[] { "public" };
 
     public async Task InitializeAsync()
     {
@@ -45,7 +49,9 @@ public sealed class WebApplicationFixture : IAsyncLifetime
             .Build();
 
         _webApplicationFactory.StartServer();
-        ReloadNpgsqlTypesAsync(_webApplicationFactory);
+
+        await ReloadNpgsqlTypesAsync(_webApplicationFactory);
+        await InitializeRespawnerAsync();
     }
 
     public async Task DisposeAsync()
@@ -68,6 +74,43 @@ public sealed class WebApplicationFixture : IAsyncLifetime
         return GrpcChannel.ForAddress("http://localhost", grpcChannelOptions);
     }
 
+    public async Task ResetDatabaseAsync()
+    {
+        if (_respawner is not null)
+        {
+            await using var connection = new NpgsqlConnection(_container.GetConnectionString());
+            await connection.OpenAsync();
+            await _respawner.ResetAsync(connection);
+
+            const string resetSequencesSql = """
+            DO $$ 
+            DECLARE 
+                r RECORD;
+            BEGIN 
+                FOR r IN (SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public') 
+                LOOP 
+                    EXECUTE 'ALTER SEQUENCE ' || quote_ident(r.sequence_name) || ' RESTART WITH 1';
+                END LOOP; 
+            END $$;
+            """;
+
+            await using var command = new NpgsqlCommand(resetSequencesSql, connection);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    private async Task InitializeRespawnerAsync()
+    {
+        await using var connection = new NpgsqlConnection(_container.GetConnectionString());
+        await connection.OpenAsync();
+
+        _respawner = await Respawner.CreateAsync(connection, new RespawnerOptions
+        {
+            DbAdapter = DbAdapter.Postgres,
+            SchemasToInclude = RespawnOptions,
+        });
+    }
+
     private void InstallFakerConfig()
     {
         AutoFaker.Configure(builder =>
@@ -76,7 +119,7 @@ public sealed class WebApplicationFixture : IAsyncLifetime
         });
     }
 
-    private async void ReloadNpgsqlTypesAsync(WebApplicationFactory<Program> webApplicationFactory)
+    private async Task ReloadNpgsqlTypesAsync(WebApplicationFactory<Program> webApplicationFactory)
     {
         NpgsqlDataSource? dataSource = webApplicationFactory.Services.GetService<NpgsqlDataSource>();
         if (dataSource is not null)

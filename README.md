@@ -105,8 +105,8 @@ graph LR
 
 ### Требования
 
-- **.NET 8 SDK**
-- **Docker Desktop** (или Docker Engine + Compose)
+- **.NET 10 SDK**
+- **Docker Desktop**
 
 ### Инструкция
 
@@ -114,7 +114,7 @@ graph LR
    Перейдите в папку с AppHost проектом и запустите:
 
 ```bash
-  dotnet run --project src/aspire/AppHost.csproj
+  dotnet run --project src/aspire/BankSystemApi.Aspire/BankSystemApi.Aspire.csproj
 ```
 
 2. **Доступ к панели Aspire:**

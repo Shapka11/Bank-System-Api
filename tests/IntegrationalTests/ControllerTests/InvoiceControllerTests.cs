@@ -20,8 +20,9 @@ using User = BankSystemApi.Domain.Users.User;
 namespace IntegrationalTests.ControllerTests;
 
 [Collection(nameof(WebApplicationCollectionFixture))]
-public sealed class InvoiceControllerTests : IAsyncDisposable
+public sealed class InvoiceControllerTests : IAsyncLifetime
 {
+    private readonly WebApplicationFixture _fixture;
     private readonly AsyncServiceScope _scope;
     private readonly IUserRepository _userRepository;
     private readonly IAccountRepository _accountRepository;
@@ -35,6 +36,7 @@ public sealed class InvoiceControllerTests : IAsyncDisposable
 
     public InvoiceControllerTests(WebApplicationFixture fixture)
     {
+        _fixture = fixture;
         _scope = fixture.Services.CreateAsyncScope();
         _userRepository = _scope.ServiceProvider.GetRequiredService<IUserRepository>();
         _accountRepository = _scope.ServiceProvider.GetRequiredService<IAccountRepository>();
@@ -42,7 +44,12 @@ public sealed class InvoiceControllerTests : IAsyncDisposable
         _invoiceServiceClient = new InvoiceService.InvoiceServiceClient(fixture.CreateChannel());
     }
 
-    public async ValueTask DisposeAsync()
+    public async Task InitializeAsync()
+    {
+        await _fixture.ResetDatabaseAsync();
+    }
+
+    public async Task DisposeAsync()
     {
         await _scope.DisposeAsync();
     }

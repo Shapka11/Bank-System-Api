@@ -3,16 +3,24 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace IntegrationalTests.RepositoryTests;
 
-public class BaseRepositoryTests : IAsyncDisposable
+public class BaseRepositoryTests : IAsyncLifetime
 {
+    private readonly WebApplicationFixture _fixture;
+
     protected AsyncServiceScope Scope { get; }
 
     public BaseRepositoryTests(WebApplicationFixture fixture)
     {
+        _fixture = fixture;
         Scope = fixture.Services.CreateAsyncScope();
     }
 
-    public async ValueTask DisposeAsync()
+    public async Task InitializeAsync()
+    {
+        await _fixture.ResetDatabaseAsync();
+    }
+
+    public async Task DisposeAsync()
     {
         await Scope.DisposeAsync();
     }
