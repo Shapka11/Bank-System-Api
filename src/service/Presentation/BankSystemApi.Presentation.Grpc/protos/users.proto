@@ -1,0 +1,39 @@
+﻿syntax = "proto3";
+import "models.proto";
+
+package user_service;
+option csharp_namespace = "BankSystemApi.Users.Grpc";
+
+service UserService {
+  rpc Add(AddUserRequest) returns (AddUserResponse);
+
+  rpc IsExists(GetUserByIdRequest) returns (GetUserByIdResponse);
+
+  rpc Get(GetUsersRequest) returns (GetUsersResponse);
+}
+
+message AddUserRequest {
+  string authorization_id = 1;
+}
+
+message AddUserResponse {
+  model.User user = 1;
+}
+
+message GetUserByIdRequest {
+  int64 user_id = 1;
+}
+
+message GetUserByIdResponse {
+  bool is_exists = 1;
+}
+
+message GetUsersRequest {
+  repeated string authorization_ids = 1;
+  repeated int64 user_ids = 2;
+  int32 page_size = 3;
+}
+
+message GetUsersResponse {
+  repeated model.User users = 1;
+}

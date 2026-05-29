@@ -1,0 +1,126 @@
+syntax = "proto3";
+
+package model;
+option csharp_namespace = "BankSystemApi.Models.Grpc";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "google/type/money.proto";
+
+
+message User {
+  int64 id = 1;
+  string authorization_id = 2;
+  google.protobuf.Timestamp created_at = 3;
+}
+
+message Account {
+  int64 id = 1;
+  int64 user_id = 2;
+  AccountType type = 3;
+  string number = 4;
+  string password = 5;
+  google.type.Money balance = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+enum AccountType {
+  ACCOUNT_TYPE_UNSPECIFIED = 0;
+  ACCOUNT_TYPE_PERSONAL = 1;
+  ACCOUNT_TYPE_CORPORATE = 2;
+}
+
+message Pagination {
+  int32 page_size = 3;
+  google.protobuf.StringValue page_token = 4;
+}
+
+message Invoice {
+  int64 id = 1;
+  int64 sender_account_id = 2;
+  int64 receiver_account_id = 3;
+  google.type.Money amount = 4;
+  InvoiceStatus status = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+enum InvoiceStatus {
+  INVOICE_STATUS_UNSPECIFIED = 0;
+  INVOICE_STATUS_CREATED = 1;
+  INVOICE_STATUS_PAID = 2;
+  INVOICE_STATUS_REVOKED = 3;
+  INVOICE_STATUS_APPROVED = 4;
+  INVOICE_STATUS_DECLINED = 5;
+}
+
+enum InvoiceType {
+  INVOICE_TYPE_UNSPECIFIED = 0;
+  INVOICE_TYPE_INCOMING = 1;
+  INVOICE_TYPE_OUTGOING = 2;
+}
+
+message HistoryOperation {
+  int64 id = 1;
+  int64 account_id = 2;
+  google.protobuf.Timestamp occurred_at = 3;
+
+  oneof operation_data {
+    CheckBalanceData check_balance = 4;
+    CreateAccountData create_account = 5;
+    DepositData deposit = 6;
+    WithdrawData withdraw = 7;
+    InvoiceIssuedData invoice_issued = 8;
+    InvoiceReceivedData invoice_received = 9;
+    InvoiceRevokedData invoice_revoked = 10;
+    InvoicePaymentReceivedData invoice_payment_received = 11;
+    InvoicePaymentSentData invoice_payment_sent = 12;
+    InvoiceApprovedData invoice_approved = 13;
+    InvoiceDeclinedData invoice_declined = 14;
+  }
+  
+  message CheckBalanceData {
+    google.type.Money balance = 1;
+  }
+  
+  message CreateAccountData { }
+  
+  message DepositData {
+    google.type.Money amount = 1;
+  }
+  
+  message WithdrawData {
+    google.type.Money amount = 1;
+  }
+  
+  message InvoiceIssuedData {
+    int64 invoice_id = 1;
+  }
+  
+  message InvoiceReceivedData {
+    int64 invoice_id = 1;
+  }
+  
+  message InvoiceRevokedData {
+    int64 invoice_id = 1;
+  }
+  
+  message InvoicePaymentReceivedData {
+    google.type.Money amount = 1;
+    int64 invoice_id = 2;
+  }
+  
+  message InvoicePaymentSentData {
+    google.type.Money amount = 1;
+    int64 invoice_id = 2;
+  }
+  
+  message InvoiceApprovedData {
+    int64 invoice_id = 1;
+  }
+  
+  message InvoiceDeclinedData {
+    int64 invoice_id = 1;
+  }
+}

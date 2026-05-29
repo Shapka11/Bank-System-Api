@@ -1,0 +1,71 @@
+﻿syntax = "proto3";
+import "models.proto";
+
+package account_service;
+option csharp_namespace = "BankSystemApi.Accounts.Grpc";
+
+import "google/type/money.proto";
+import "google/protobuf/wrappers.proto";
+
+service AccountService {
+  rpc Create(CreateAccountRequest) returns (CreateAccountResponse);
+
+  rpc Deposit(DepositRequest) returns (DepositResponse);
+
+  rpc Withdraw(WithdrawRequest) returns (WithdrawResponse);
+
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+  
+  rpc Get(GetAccountsRequest) returns (GetAccountsResponse);
+}
+
+message CreateAccountRequest {
+  string caller_user_id = 1;
+  int64 target_user_id = 2;
+  string account_number = 3;
+  string password = 4;
+  model.AccountType account_type = 5;
+}
+
+message CreateAccountResponse {
+    model.Account account = 1;
+}
+
+message DepositRequest {
+  string user_id = 1;
+  int64 account_id = 2;
+  google.type.Money amount = 3;
+}
+
+message DepositResponse {
+  model.Account account = 1;
+}
+
+message WithdrawRequest {
+  string user_id = 1;
+  int64 account_id = 2;
+  google.type.Money amount = 3;
+}
+
+message WithdrawResponse {
+  model.Account account = 1;
+}
+
+message GetBalanceRequest {
+  string user_id = 1;
+  int64 account_id = 2;
+}
+
+message GetBalanceResponse {
+  google.type.Money balance = 1;
+}
+
+message GetAccountsRequest {
+  string user_id = 1;
+  model.Pagination pagination = 2;
+}
+
+message GetAccountsResponse {
+  repeated model.Account accounts = 1;
+  google.protobuf.StringValue page_token = 2;
+}

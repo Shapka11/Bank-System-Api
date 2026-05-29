@@ -1,0 +1,23 @@
+﻿syntax = "proto3";
+import "models.proto";
+
+package history_operation_service;
+option csharp_namespace = "BankSystemApi.HistoryOperations.Grpc";
+
+import "google/protobuf/wrappers.proto";
+
+
+service HistoryOperationService {
+  rpc Get(GetHistoryOperationRequest) returns (GetHistoryOperationResponse);
+}
+
+message GetHistoryOperationRequest {
+  string user_id = 1;
+  int64 account_id = 2;
+  model.Pagination pagination = 3;
+}
+
+message GetHistoryOperationResponse {
+  repeated model.HistoryOperation history = 1;
+  google.protobuf.StringValue page_token = 2;
+}

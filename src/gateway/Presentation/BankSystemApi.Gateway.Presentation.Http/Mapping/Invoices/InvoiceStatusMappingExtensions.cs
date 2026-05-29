@@ -1,0 +1,33 @@
+﻿using BankSystemApi.Gateway.Application.Contracts.Invoices.Models;
+using BankSystemApi.Gateway.Presentation.Http.Models.Invoices;
+
+namespace BankSystemApi.Gateway.Presentation.Http.Mapping.Invoices;
+
+public static class InvoiceStatusMappingExtensions
+{
+    public static InvoiceStatusModel MapToModel(this InvoiceStatusDto dto)
+    {
+        return dto switch
+        {
+            InvoiceStatusDto.Created => InvoiceStatusModel.Created,
+            InvoiceStatusDto.Paid => InvoiceStatusModel.Paid,
+            InvoiceStatusDto.Revoked => InvoiceStatusModel.Revoked,
+            InvoiceStatusDto.Approved => InvoiceStatusModel.Approved,
+            InvoiceStatusDto.Declined => InvoiceStatusModel.Declined,
+            _ => throw new ArgumentOutOfRangeException(nameof(dto), dto, "Incorrect status"),
+        };
+    }
+
+    public static InvoiceStatusDto MapToDto(this InvoiceStatusModel model)
+    {
+        return model switch
+        {
+            InvoiceStatusModel.Created => InvoiceStatusDto.Created,
+            InvoiceStatusModel.Paid => InvoiceStatusDto.Paid,
+            InvoiceStatusModel.Revoked => InvoiceStatusDto.Revoked,
+            InvoiceStatusModel.Approved => InvoiceStatusDto.Approved,
+            InvoiceStatusModel.Declined => InvoiceStatusDto.Declined,
+            _ => throw new ArgumentOutOfRangeException(nameof(model), model, "Incorrect status"),
+        };
+    }
+}

@@ -1,8 +1,0 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="..\..\Domain\BankSystemApi.Domain\BankSystemApi.Domain.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="SourceKit.Generators.Builder" />
-  </ItemGroup>
-</Project>
