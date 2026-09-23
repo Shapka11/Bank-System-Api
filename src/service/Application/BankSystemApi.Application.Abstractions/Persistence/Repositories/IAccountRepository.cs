@@ -10,4 +10,8 @@ public interface IAccountRepository
     Task UpdateAsync(IReadOnlyCollection<Account> accounts, CancellationToken cancellationToken);
 
     IAsyncEnumerable<Account> QueryAsync(AccountQuery query, CancellationToken cancellationToken);
+
+    IAsyncEnumerable<Account> GetByIdsForUpdateAsync(
+        IReadOnlyCollection<AccountId> accountIds,
+        CancellationToken cancellationToken);
 }

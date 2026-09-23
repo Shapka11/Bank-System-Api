@@ -110,6 +110,31 @@ internal sealed class AccountRepository : IAccountRepository
         }
     }
 
+    public async IAsyncEnumerable<Account> GetByIdsForUpdateAsync(
+        IReadOnlyCollection<AccountId> accountIds,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        const string sql = """
+        SELECT account_id, user_id, type, account_number, password, balance, created_at, updated_at
+        FROM accounts
+        WHERE account_id = ANY(:ids)
+        ORDER BY account_id
+        FOR UPDATE
+        """;
+
+        await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
+
+        await using IPersistenceCommand command = connection.CreateCommand(sql)
+            .AddParameter("ids", accountIds.Select(i => i.Value));
+
+        await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            yield return CreateAccount(reader);
+        }
+    }
+
     private static Account CreateAccount(DbDataReader reader)
     {
         return new Account(

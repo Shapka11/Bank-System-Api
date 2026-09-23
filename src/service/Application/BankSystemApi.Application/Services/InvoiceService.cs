@@ -157,8 +157,11 @@ internal sealed class InvoiceService : IInvoiceService
             return new PayInvoice.Response.Unauthorized(request.UserId);
         }
 
+        await using IPersistenceTransaction transaction = await _transactionProvider
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
         var invoiceId = new InvoiceId(request.InvoiceId);
-        Invoice? invoice = await _context.InvoicesRepository.FindById(invoiceId, cancellationToken);
+        Invoice? invoice = await _context.InvoicesRepository.GetByIdForUpdateAsync(invoiceId, cancellationToken);
 
         if (invoice is null)
         {
@@ -166,16 +169,19 @@ internal sealed class InvoiceService : IInvoiceService
             return new PayInvoice.Response.InvoiceNotFound(invoiceId.Value);
         }
 
-        Account? senderAccount = await _context.AccountsRepository
-            .FindAccountByIdAsync(invoice.SenderAccountId, cancellationToken);
+        Account[] accounts = await _context.AccountsRepository
+            .GetByIdsForUpdateAsync([invoice.SenderAccountId, invoice.ReceiverAccountId], cancellationToken)
+            .ToArrayAsync(cancellationToken);
+
+        Account? senderAccount = accounts.SingleOrDefault(account => account.Id == invoice.SenderAccountId);
+        Account? receiverAccount = accounts.SingleOrDefault(account => account.Id == invoice.ReceiverAccountId);
+
         if (senderAccount is null)
         {
             _logger.LogWarning("Account with id {AccountId} not found.", invoice.SenderAccountId.Value);
             return new PayInvoice.Response.AccountNotFound(invoice.SenderAccountId.Value);
         }
 
-        Account? receiverAccount = await _context.AccountsRepository
-            .FindAccountByIdAsync(invoice.ReceiverAccountId, cancellationToken);
         if (receiverAccount is null)
         {
             _logger.LogWarning("Account with id {AccountId} not found.", invoice.ReceiverAccountId.Value);
@@ -226,9 +232,6 @@ internal sealed class InvoiceService : IInvoiceService
             invoice.Amount,
             invoice.Id,
             _dateTimeProvider.Current);
-
-        await using IPersistenceTransaction transaction = await _transactionProvider
-            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
 
         await _context.AccountsRepository.UpdateAsync([senderAccount, receiverAccount], cancellationToken);
 

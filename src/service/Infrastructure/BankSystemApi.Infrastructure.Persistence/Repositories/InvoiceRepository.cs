@@ -131,6 +131,38 @@ internal sealed class InvoiceRepository : IInvoiceRepository
         }
     }
 
+    public async Task<Invoice?> GetByIdForUpdateAsync(
+        InvoiceId invoiceId,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+        SELECT invoice_id, 
+               sender_account_id, 
+               receiver_account_id,
+               amount, 
+               status, 
+               created_at, 
+               updated_at
+        FROM invoices
+        WHERE invoice_ad = :id
+        FOR UPDATE
+        """;
+
+        await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
+
+        await using IPersistenceCommand command = connection.CreateCommand(sql)
+            .AddParameter("id", invoiceId.Value);
+
+        await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            return CreateInvoice(reader);
+        }
+
+        return null;
+    }
+
     private static Invoice CreateInvoice(DbDataReader reader)
     {
         return new Invoice(
