@@ -126,18 +126,18 @@ internal sealed class InvoiceService : IInvoiceService
             .AddAsync([operationSenderAccount, operationReceiverAccount], cancellationToken)
             .FirstAsync(cancellationToken);
 
-        await transaction.CommitAsync(cancellationToken);
-
-        _logger.LogInformation("Invoice {InvoiceId} created successfully", invoice.Id.Value);
-
-        _metrics.IncInvoiceCreated();
-
         var creationInvoiceEvent = new CreationInvoiceEvent(
             invoice.Id.Value,
             invoice.SenderAccountId.Value,
             invoice.ReceiverAccountId.Value,
             invoice.Amount.Value);
         await _invoiceEventPublisher.Publish([creationInvoiceEvent], cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+
+        _logger.LogInformation("Invoice {InvoiceId} created successfully", invoice.Id.Value);
+
+        _metrics.IncInvoiceCreated();
 
         return new CreateInvoice.Response.Success(invoice.MapToDto());
     }
@@ -354,6 +354,14 @@ internal sealed class InvoiceService : IInvoiceService
             return new ApproveInvoice.Response.InvoiceNotFound(invoiceId.Value);
         }
 
+        if (invoice.State.State == InvoiceStatus.Approved)
+        {
+            _logger.LogDebug(
+                "Invoice approval is already applied. Duplicate command ignored. InvoiceId: {InvoiceId}",
+                invoice.Id.Value);
+            return new ApproveInvoice.Response.Success(invoice.MapToDto());
+        }
+
         ApproveInvoiceResult invoiceApproveResult = invoice.Approve();
         if (invoiceApproveResult is ApproveInvoiceResult.Failure failure)
         {
@@ -420,6 +428,14 @@ internal sealed class InvoiceService : IInvoiceService
         {
             _logger.LogWarning("Invoice {InvoiceId} not found", invoiceId.Value);
             return new DeclineInvoice.Response.InvoiceNotFound(invoiceId.Value);
+        }
+
+        if (invoice.State.State == InvoiceStatus.Declined)
+        {
+            _logger.LogDebug(
+                "Invoice decline is already applied. Duplicate command ignored. InvoiceId: {InvoiceId}",
+                invoice.Id.Value);
+            return new DeclineInvoice.Response.Success(invoice.MapToDto());
         }
 
         DeclineInvoiceResult invoiceDeclineResult = invoice.Decline();

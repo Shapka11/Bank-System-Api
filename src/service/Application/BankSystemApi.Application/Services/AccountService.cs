@@ -122,6 +122,12 @@ internal sealed class AccountService : IAccountService
             .AddAsync([operation], cancellationToken)
             .FirstAsync(cancellationToken);
 
+        var creationAccountEvent = new CreationAccountEvent(
+            account.Id.Value,
+            account.UserId.Value,
+            account.Type.MapToEvent());
+        await _accountEventPublisher.Publish([creationAccountEvent], cancellationToken);
+
         await transaction.CommitAsync(cancellationToken);
 
         _logger.LogInformation(
@@ -130,12 +136,6 @@ internal sealed class AccountService : IAccountService
             targetUser.Id.Value);
 
         _metrics.IncAccountCreated();
-
-        var creationAccountEvent = new CreationAccountEvent(
-            account.Id.Value,
-            account.UserId.Value,
-            account.Type.MapToEvent());
-        await _accountEventPublisher.Publish([creationAccountEvent], cancellationToken);
 
         return new CreateAccount.Response.Success(account.MapToDto());
     }
