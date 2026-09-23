@@ -19,7 +19,6 @@ public sealed partial class InvoiceServiceTests
         new PaidInvoiceState(),
         new RevokedInvoiceState(),
         new DeclinedInvoiceState(),
-        new ApprovedInvoiceState(),
     };
 
     [Fact]
@@ -112,6 +111,31 @@ public sealed partial class InvoiceServiceTests
 
         // Assert
         response.Should().BeOfType<ApproveInvoice.Response.InvoiceNotFound>();
+    }
+
+    [Fact]
+    public async Task ApproveAsync_ShouldSuccess_WhenInvoiceAlreadyApproved()
+    {
+        // Arrange
+        Account senderAccount = new AutoFaker<Account>().Generate();
+        Account receiverAccount = new AutoFaker<Account>().Generate();
+        Invoice invoice = new AutoFaker<InvoiceTestModel>()
+            .RuleFor(i => i.SenderAccountId, senderAccount.Id)
+            .RuleFor(i => i.ReceiverAccountId, receiverAccount.Id)
+            .RuleFor(i => i.State, new ApprovedInvoiceState())
+            .Generate()
+            .MapToDomain();
+
+        ApproveInvoice.Request request = new(invoice.Id.Value);
+
+        _persistenceContext.InvoicesRepository
+            .SetupQueryInvoiceById(invoice.Id, invoice);
+
+        // Act
+        ApproveInvoice.Response response = await _invoiceService.ApproveAsync(request, default);
+
+        // Assert
+        response.Should().BeOfType<ApproveInvoice.Response.Success>();
     }
 
     [Theory]

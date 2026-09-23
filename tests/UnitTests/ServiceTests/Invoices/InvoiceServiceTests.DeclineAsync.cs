@@ -18,7 +18,6 @@ public sealed partial class InvoiceServiceTests
     {
         new PaidInvoiceState(),
         new RevokedInvoiceState(),
-        new DeclinedInvoiceState(),
         new ApprovedInvoiceState(),
     };
 
@@ -112,6 +111,31 @@ public sealed partial class InvoiceServiceTests
 
         // Assert
         response.Should().BeOfType<DeclineInvoice.Response.InvoiceNotFound>();
+    }
+
+    [Fact]
+    public async Task DeclineAsync_ShouldSuccess_WhenInvoiceAlreadyDeclined()
+    {
+        // Arrange
+        Account senderAccount = new AutoFaker<Account>().Generate();
+        Account receiverAccount = new AutoFaker<Account>().Generate();
+        Invoice invoice = new AutoFaker<InvoiceTestModel>()
+            .RuleFor(i => i.SenderAccountId, senderAccount.Id)
+            .RuleFor(i => i.ReceiverAccountId, receiverAccount.Id)
+            .RuleFor(i => i.State, new DeclinedInvoiceState())
+            .Generate()
+            .MapToDomain();
+
+        DeclineInvoice.Request request = new(invoice.Id.Value);
+
+        _persistenceContext.InvoicesRepository
+            .SetupQueryInvoiceById(invoice.Id, invoice);
+
+        // Act
+        DeclineInvoice.Response response = await _invoiceService.DeclineAsync(request, default);
+
+        // Assert
+        response.Should().BeOfType<DeclineInvoice.Response.Success>();
     }
 
     [Theory]
