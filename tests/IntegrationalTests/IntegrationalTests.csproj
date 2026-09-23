@@ -6,8 +6,8 @@
 
     <ItemGroup>
         <PackageReference Include="coverlet.collector">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="FluentAssertions" />
         <PackageReference Include="Grpc.Net.Client" />
@@ -15,21 +15,23 @@
         <PackageReference Include="Itmo.Dev.Platform.Testing" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="SSH.NET" />
         <PackageReference Include="Testcontainers.PostgreSql" />
         <PackageReference Include="xunit" />
         <PackageReference Include="xunit.runner.visualstudio">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="Xunit"/>
+        <Using Include="Xunit" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\service\BankSystemApi\BankSystemApi.csproj" />
-      <ProjectReference Include="..\..\src\service\Infrastructure\BankSystemApi.Infrastructure.Persistence\BankSystemApi.Infrastructure.Persistence.csproj" />
+        <ProjectReference Include="..\..\src\service\BankSystemApi\BankSystemApi.csproj" />
+        <ProjectReference
+            Include="..\..\src\service\Infrastructure\BankSystemApi.Infrastructure.Persistence\BankSystemApi.Infrastructure.Persistence.csproj" />
     </ItemGroup>
 
 </Project>

@@ -11,6 +11,7 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
         <AnalysisMode>All</AnalysisMode>
+        <NoWarn>$(NoWarn);CA1873</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,30 +23,30 @@
 
     <!-- ITMO is DEV code style analyzers -->
     <ItemGroup>
-        <PackageReference Include="SourceKit.Analyzers.Collections"/>
-        <PackageReference Include="SourceKit.Analyzers.Enumerable"/>
-        <PackageReference Include="SourceKit.Analyzers.MemberAccessibility"/>
-        <PackageReference Include="SourceKit.Analyzers.Nullable"/>
-        <PackageReference Include="SourceKit.Analyzers.Properties"/>
+        <PackageReference Include="SourceKit.Analyzers.Collections" />
+        <PackageReference Include="SourceKit.Analyzers.Enumerable" />
+        <PackageReference Include="SourceKit.Analyzers.MemberAccessibility" />
+        <PackageReference Include="SourceKit.Analyzers.Nullable" />
+        <PackageReference Include="SourceKit.Analyzers.Properties" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Itmo.Dev.Editorconfig"/>
+        <PackageReference Include="Itmo.Dev.Editorconfig" />
     </ItemGroup>
 
     <!-- Make project internal classes visible to test projects with same name -->
     <ItemGroup>
-        <InternalsVisibleTo Include="$(AssemblyName).Tests"/>
+        <InternalsVisibleTo Include="$(AssemblyName).Tests" />
     </ItemGroup>
 
     <Target Name="Install git hooks" BeforeTargets="Build">
-        
+
         <ItemGroup>
-            <GitHooks Include="$(MSBuildThisFileDirectory).githooks/*"/>
+            <GitHooks Include="$(MSBuildThisFileDirectory).githooks/*" />
         </ItemGroup>
-        
+
         <Copy SourceFiles="@(GitHooks)"
-              DestinationFolder="$(MSBuildThisFileDirectory).git/hooks"/>
+              DestinationFolder="$(MSBuildThisFileDirectory).git/hooks" />
 
     </Target>
 
