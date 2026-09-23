@@ -43,9 +43,23 @@ public static class UserRepositoryMockExtensions
     {
         mock
             .Setup(repo => repo.TryAddAsync(
-                It.Is<IReadOnlyCollection<User>>(c => c.Any(u => u.AuthorizationId == user.AuthorizationId)),
+                It.Is<User>(c => c.AuthorizationId == user.AuthorizationId),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
+
+        return mock;
+    }
+
+    public static Mock<IUserRepository> SetupGetUserByIdForUpdate(
+        this Mock<IUserRepository> mock,
+        UserId userId,
+        User? returnedUser = null)
+    {
+        mock
+            .Setup(repo => repo.GetByIdForUpdateAsync(
+                It.Is<UserId>(id => id == userId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(returnedUser);
 
         return mock;
     }

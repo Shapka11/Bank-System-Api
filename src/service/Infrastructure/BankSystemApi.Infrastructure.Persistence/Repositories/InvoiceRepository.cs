@@ -144,7 +144,7 @@ internal sealed class InvoiceRepository : IInvoiceRepository
                created_at, 
                updated_at
         FROM invoices
-        WHERE invoice_ad = :id
+        WHERE invoice_id = :id
         FOR UPDATE
         """;
 

@@ -33,6 +33,20 @@ public static class InvoiceRepositoryMockExtensions
         return mock;
     }
 
+    public static Mock<IInvoiceRepository> SetupGetInvoiceByIdForUpdate(
+        this Mock<IInvoiceRepository> mock,
+        InvoiceId invoiceId,
+        Invoice? returnedInvoice = null)
+    {
+        mock
+            .Setup(repo => repo.GetByIdForUpdateAsync(
+                It.Is<InvoiceId>(id => id == invoiceId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(returnedInvoice);
+
+        return mock;
+    }
+
     public static Mock<IInvoiceRepository> SetupQueryInvoiceById(
         this Mock<IInvoiceRepository> mock,
         InvoiceId id,

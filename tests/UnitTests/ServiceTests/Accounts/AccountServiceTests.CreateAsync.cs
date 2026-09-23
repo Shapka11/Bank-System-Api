@@ -1,5 +1,6 @@
 using AutoBogus;
 using BankSystemApi.Application.Abstractions.Events.Models;
+using BankSystemApi.Application.Abstractions.Persistence.Results;
 using BankSystemApi.Application.Contracts.Accounts.Models;
 using BankSystemApi.Application.Contracts.Accounts.Operations;
 using BankSystemApi.Application.Mapping;
@@ -61,12 +62,12 @@ public sealed partial class AccountServiceTests
 
         _persistenceContext.UsersRepository
             .SetupQueryUserByAuthId(callerUser.AuthorizationId, callerUser)
-            .SetupQueryUserById(targetUser.Id, targetUser);
+            .SetupGetUserByIdForUpdate(targetUser.Id, targetUser);
 
         _persistenceContext.AccountsRepository
             .SetupQueryAccountByUserId(targetUser.Id, targetUserAccounts.ToArray())
             .SetupQueryAccountByNumber(createdAccountNumbers)
-            .SetupAddAccount(createdAccount, createdAccountId);
+            .SetupTryAddAccount(createdAccount, new AddAccountResult.Success(createdAccount));
 
         _persistenceContext.HistoryOperationsRepository
             .SetupAddHistoryOperation([historyOperation], [expectedHistoryOperationId]);
@@ -142,7 +143,7 @@ public sealed partial class AccountServiceTests
 
         _persistenceContext.UsersRepository
             .SetupQueryUserByAuthId(callerUser.AuthorizationId, callerUser)
-            .SetupQueryUserById(targetUser.Id);
+            .SetupGetUserByIdForUpdate(targetUser.Id);
 
         // Act
         CreateAccount.Response response = await _accountService.CreateAsync(request, default);
@@ -179,7 +180,7 @@ public sealed partial class AccountServiceTests
 
         _persistenceContext.UsersRepository
             .SetupQueryUserByAuthId(callerUser.AuthorizationId, callerUser)
-            .SetupQueryUserById(targetUser.Id, targetUser);
+            .SetupGetUserByIdForUpdate(targetUser.Id, targetUser);
 
         _persistenceContext.AccountsRepository
             .SetupQueryAccountByUserId(targetUser.Id, targetUserAccounts.ToArray());
@@ -213,7 +214,7 @@ public sealed partial class AccountServiceTests
 
         _persistenceContext.UsersRepository
             .SetupQueryUserByAuthId(callerUser.AuthorizationId, callerUser)
-            .SetupQueryUserById(targetUser.Id, targetUser);
+            .SetupGetUserByIdForUpdate(targetUser.Id, targetUser);
 
         _persistenceContext.AccountsRepository
             .SetupQueryAccountByUserId(targetUser.Id, targetUserAccounts.ToArray())

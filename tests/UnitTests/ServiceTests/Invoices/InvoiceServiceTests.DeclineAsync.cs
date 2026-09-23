@@ -59,7 +59,7 @@ public sealed partial class InvoiceServiceTests
 
         _persistenceContext.InvoicesRepository
             .SetupUpdateInvoice(invoice)
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         _persistenceContext.HistoryOperationsRepository
             .SetupAddHistoryOperation(
@@ -73,7 +73,7 @@ public sealed partial class InvoiceServiceTests
             invoice.Amount.Value,
             InvoiceStatusDto.Declined,
             invoice.CreatedAt,
-            invoice.UpdatedAt);
+            currentTime);
 
         _serviceMetrics.Setup(m => m.InvInvoiceDeclined());
 
@@ -104,7 +104,7 @@ public sealed partial class InvoiceServiceTests
         DeclineInvoice.Request request = new(invoice.Id.Value);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id);
 
         // Act
         DeclineInvoice.Response response = await _invoiceService.DeclineAsync(request, default);
@@ -129,7 +129,7 @@ public sealed partial class InvoiceServiceTests
         DeclineInvoice.Request request = new(invoice.Id.Value);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         DeclineInvoice.Response response = await _invoiceService.DeclineAsync(request, default);
@@ -154,8 +154,10 @@ public sealed partial class InvoiceServiceTests
 
         DeclineInvoice.Request request = new(invoice.Id.Value);
 
+        _dateTimeProvider.Setup(time => time.Current).Returns(_faker.Date.RecentOffset());
+
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         DeclineInvoice.Response response = await _invoiceService.DeclineAsync(request, default);
@@ -179,11 +181,13 @@ public sealed partial class InvoiceServiceTests
 
         DeclineInvoice.Request request = new(invoice.Id.Value);
 
+        _dateTimeProvider.Setup(time => time.Current).Returns(_faker.Date.RecentOffset());
+
         _persistenceContext.AccountsRepository
             .SetupQueryAccountById(senderAccount.Id);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         DeclineInvoice.Response response = await _invoiceService.DeclineAsync(request, default);
@@ -207,12 +211,14 @@ public sealed partial class InvoiceServiceTests
 
         DeclineInvoice.Request request = new(invoice.Id.Value);
 
+        _dateTimeProvider.Setup(time => time.Current).Returns(_faker.Date.RecentOffset());
+
         _persistenceContext.AccountsRepository
             .SetupQueryAccountById(senderAccount.Id, senderAccount)
             .SetupQueryAccountById(receiverAccount.Id);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         DeclineInvoice.Response response = await _invoiceService.DeclineAsync(request, default);

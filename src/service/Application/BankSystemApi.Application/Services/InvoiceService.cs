@@ -204,6 +204,7 @@ internal sealed class InvoiceService : IInvoiceService
         }
 
         PayInvoiceResult invoicePayResult = invoice.Pay();
+        invoice.UpdateTime(_dateTimeProvider.Current);
         if (invoicePayResult is PayInvoiceResult.Failure)
         {
             _logger.LogWarning("Invoice {InvoiceId} attempt pay failed", invoiceId.Value);
@@ -211,6 +212,7 @@ internal sealed class InvoiceService : IInvoiceService
         }
 
         senderAccount.Deposit(invoice.Amount);
+        senderAccount.UpdateTime(_dateTimeProvider.Current);
         var operationSenderAccount = new InvoicePaymentSentHistoryOperation(
             HistoryOperationId.Default,
             senderAccount.Id,
@@ -219,6 +221,7 @@ internal sealed class InvoiceService : IInvoiceService
             _dateTimeProvider.Current);
 
         WithdrawResult withdrawResult = receiverAccount.Withdraw(invoice.Amount);
+        receiverAccount.UpdateTime(_dateTimeProvider.Current);
 
         if (withdrawResult is WithdrawResult.Failure failure)
         {
@@ -265,8 +268,13 @@ internal sealed class InvoiceService : IInvoiceService
             return new RevokeInvoice.Response.Unauthorized(request.UserId);
         }
 
+        await using IPersistenceTransaction transaction = await _transactionProvider
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
         var invoiceId = new InvoiceId(request.InvoiceId);
-        Invoice? invoice = await _context.InvoicesRepository.FindById(invoiceId, cancellationToken);
+        Invoice? invoice = await _context.InvoicesRepository
+            .GetByIdForUpdateAsync(invoiceId, cancellationToken);
+
         if (invoice is null)
         {
             _logger.LogWarning("Invoice {InvoiceId} not found", invoiceId.Value);
@@ -306,6 +314,7 @@ internal sealed class InvoiceService : IInvoiceService
         }
 
         RevokeInvoiceResult invoiceRevokeResult = invoice.Revoke();
+        invoice.UpdateTime(_dateTimeProvider.Current);
         if (invoiceRevokeResult is RevokeInvoiceResult.Failure failure)
         {
             _logger.LogWarning("Invoice {InvoiceId} attempt revoke failed", invoiceId.Value);
@@ -323,9 +332,6 @@ internal sealed class InvoiceService : IInvoiceService
             receiverAccount.Id,
             invoice.Id,
             _dateTimeProvider.Current);
-
-        await using IPersistenceTransaction transaction = await _transactionProvider
-            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
 
         await _context.InvoicesRepository.UpdateAsync([invoice], cancellationToken);
 
@@ -349,8 +355,11 @@ internal sealed class InvoiceService : IInvoiceService
         using Activity? activity = InvoiceServiceActivity.ActivitySource.StartActivity();
         activity?.SetTag("invoice.id", request.InvoiceId);
 
+        await using IPersistenceTransaction transaction = await _transactionProvider
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
         var invoiceId = new InvoiceId(request.InvoiceId);
-        Invoice? invoice = await _context.InvoicesRepository.FindById(invoiceId, cancellationToken);
+        Invoice? invoice = await _context.InvoicesRepository.GetByIdForUpdateAsync(invoiceId, cancellationToken);
         if (invoice is null)
         {
             _logger.LogWarning("Invoice {InvoiceId} not found", invoiceId.Value);
@@ -366,6 +375,7 @@ internal sealed class InvoiceService : IInvoiceService
         }
 
         ApproveInvoiceResult invoiceApproveResult = invoice.Approve();
+        invoice.UpdateTime(_dateTimeProvider.Current);
         if (invoiceApproveResult is ApproveInvoiceResult.Failure failure)
         {
             _logger.LogWarning("Invoice {InvoiceId} attempt approve failed", invoiceId.Value);
@@ -400,9 +410,6 @@ internal sealed class InvoiceService : IInvoiceService
             invoice.Id,
             _dateTimeProvider.Current);
 
-        await using IPersistenceTransaction transaction = await _transactionProvider
-            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
-
         await _context.InvoicesRepository.UpdateAsync([invoice], cancellationToken);
 
         await _context.HistoryOperationsRepository
@@ -425,8 +432,11 @@ internal sealed class InvoiceService : IInvoiceService
         using Activity? activity = InvoiceServiceActivity.ActivitySource.StartActivity();
         activity?.SetTag("invoice.id", request.InvoiceId);
 
+        await using IPersistenceTransaction transaction = await _transactionProvider
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
         var invoiceId = new InvoiceId(request.InvoiceId);
-        Invoice? invoice = await _context.InvoicesRepository.FindById(invoiceId, cancellationToken);
+        Invoice? invoice = await _context.InvoicesRepository.GetByIdForUpdateAsync(invoiceId, cancellationToken);
         if (invoice is null)
         {
             _logger.LogWarning("Invoice {InvoiceId} not found", invoiceId.Value);
@@ -442,6 +452,7 @@ internal sealed class InvoiceService : IInvoiceService
         }
 
         DeclineInvoiceResult invoiceDeclineResult = invoice.Decline();
+        invoice.UpdateTime(_dateTimeProvider.Current);
         if (invoiceDeclineResult is DeclineInvoiceResult.Failure failure)
         {
             _logger.LogWarning("Invoice {InvoiceId} attempt decline failed", invoiceId.Value);
@@ -464,20 +475,17 @@ internal sealed class InvoiceService : IInvoiceService
             return new DeclineInvoice.Response.AccountNotFound(invoice.ReceiverAccountId.Value);
         }
 
-        var senderAccountOperation = new InvoiceApprovedHistoryOperation(
+        var senderAccountOperation = new InvoiceDeclinedHistoryOperation(
             HistoryOperationId.Default,
             senderAccount.Id,
             invoice.Id,
             _dateTimeProvider.Current);
 
-        var receiverAccountOperation = new InvoiceApprovedHistoryOperation(
+        var receiverAccountOperation = new InvoiceDeclinedHistoryOperation(
             HistoryOperationId.Default,
             receiverAccount.Id,
             invoice.Id,
             _dateTimeProvider.Current);
-
-        await using IPersistenceTransaction transaction = await _transactionProvider
-            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
 
         await _context.InvoicesRepository.UpdateAsync([invoice], cancellationToken);
 

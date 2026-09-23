@@ -26,8 +26,8 @@ public sealed class UserRepositoryTests : BaseRepositoryTests
         User user = new AutoFaker<User>().Generate();
 
         // Act
-        AddUserResult resultFirstAdd = await _userRepository.TryAddAsync([user], default);
-        AddUserResult resultSecondAdd = await _userRepository.TryAddAsync([user], default);
+        AddUserResult resultFirstAdd = await _userRepository.TryAddAsync(user, default);
+        AddUserResult resultSecondAdd = await _userRepository.TryAddAsync(user, default);
 
         // Assert
         resultFirstAdd.Should().BeOfType<AddUserResult.Success>().Which.User.Id.Value.Should().Be(1);
@@ -45,7 +45,7 @@ public sealed class UserRepositoryTests : BaseRepositoryTests
             .WithPageSize(pageSize));
 
         // Act
-        var addResult = await _userRepository.TryAddAsync([user], default) as AddUserResult.Success;
+        var addResult = await _userRepository.TryAddAsync(user, default) as AddUserResult.Success;
         List<User> resultUsers = await _userRepository.QueryAsync(query, default).ToListAsync();
 
         // Assert
@@ -59,7 +59,7 @@ public sealed class UserRepositoryTests : BaseRepositoryTests
     {
         // Arrange
         User user = new AutoFaker<User>().Generate();
-        var addResult = (AddUserResult.Success)await _userRepository.TryAddAsync([user], default);
+        var addResult = (AddUserResult.Success)await _userRepository.TryAddAsync(user, default);
         User addedUser = addResult.User;
 
         const int pageSize = 1;

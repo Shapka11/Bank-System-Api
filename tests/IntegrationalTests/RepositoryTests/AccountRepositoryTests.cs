@@ -1,6 +1,7 @@
 using AutoBogus;
 using BankSystemApi.Application.Abstractions.Persistence.Queries;
 using BankSystemApi.Application.Abstractions.Persistence.Repositories;
+using BankSystemApi.Application.Abstractions.Persistence.Results;
 using BankSystemApi.Application.Specifications;
 using BankSystemApi.Domain.Accounts;
 using BankSystemApi.Domain.ValueObjects;
@@ -21,13 +22,13 @@ public sealed class AccountRepositoryTests : BaseRepositoryTests
     }
 
     [Fact]
-    public async Task AddAsync_ShouldAddAccount()
+    public async Task TryAddAsync_ShouldAddAccount()
     {
         // Arrange
         Account account = new AutoFaker<Account>().Generate();
 
         // Act
-        Account dbAccount = await _accountRepository.AddAsync([account], default).FirstAsync();
+        Account dbAccount = await AddAccountAsync(account);
 
         // Assert
         dbAccount.Number.Should().Be(account.Number);
@@ -39,7 +40,7 @@ public sealed class AccountRepositoryTests : BaseRepositoryTests
         // Arrange
         Account account = new AutoFaker<Account>().RuleFor(a => a.Balance, new Money(1)).Generate();
 
-        account = await _accountRepository.AddAsync([account], default).FirstAsync();
+        account = await AddAccountAsync(account);
         account.Deposit(new Money(1));
 
         // Act
@@ -96,12 +97,19 @@ public sealed class AccountRepositoryTests : BaseRepositoryTests
     private async Task<Account> SeedAccountAsync()
     {
         Account account = new AutoFaker<Account>().Generate();
-        account = await _accountRepository.AddAsync([account], default).FirstAsync();
+        account = await AddAccountAsync(account);
 
         var query = AccountQuery.Build(builder => builder
             .WithAccountNumber(account.Number)
             .WithPageSize(1));
 
         return await _accountRepository.QueryAsync(query, default).FirstAsync();
+    }
+
+    private async Task<Account> AddAccountAsync(Account account)
+    {
+        AddAccountResult result = await _accountRepository.TryAddAsync(account, default);
+
+        return result.Should().BeOfType<AddAccountResult.Success>().Subject.Account;
     }
 }

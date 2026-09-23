@@ -19,13 +19,11 @@ internal sealed class UserRepository : IUserRepository
         _connectionProvider = connectionProvider;
     }
 
-    public async Task<AddUserResult> TryAddAsync(IReadOnlyCollection<User> users, CancellationToken cancellationToken)
+    public async Task<AddUserResult> TryAddAsync(User user, CancellationToken cancellationToken)
     {
         const string sql = """
         INSERT INTO users (authorization_id, created_at)
-        SELECT authorization_id, created_at
-        FROM unnest(:authorizationIds, :createdAts) 
-            AS source(authorization_id, created_at)
+        VALUES (:authorizationIds, :createdAts)
         ON CONFLICT (authorization_id) DO NOTHING
         RETURNING user_id, authorization_id, created_at
         """;
@@ -33,17 +31,14 @@ internal sealed class UserRepository : IUserRepository
         await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
 
         await using IPersistenceCommand command = connection.CreateCommand(sql)
-            .AddParameter("authorizationIds", users.Select(u => u.AuthorizationId))
-            .AddParameter("createdAts", users.Select(u => u.CreatedAt));
+            .AddParameter("authorizationIds", user.AuthorizationId)
+            .AddParameter("createdAts", user.CreatedAt);
 
         await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
         if (await reader.ReadAsync(cancellationToken))
         {
-            var insertedUser = new User(
-                new UserId(reader.GetInt64("user_id")),
-                reader.GetGuid("authorization_id"),
-                reader.GetFieldValue<DateTimeOffset>("created_at"));
+            User insertedUser = CreateUser(reader);
 
             return new AddUserResult.Success(insertedUser);
         }
@@ -78,10 +73,39 @@ internal sealed class UserRepository : IUserRepository
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            yield return new User(
-                new UserId(reader.GetInt64("user_id")),
-                reader.GetGuid("authorization_id"),
-                reader.GetFieldValue<DateTimeOffset>("created_at"));
+            yield return CreateUser(reader);
         }
+    }
+
+    public async Task<User?> GetByIdForUpdateAsync(UserId userId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+        SELECT user_id, authorization_id, created_at   
+        FROM users
+        WHERE user_id = :id
+        FOR UPDATE
+        """;
+
+        await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
+
+        await using IPersistenceCommand command = connection.CreateCommand(sql)
+            .AddParameter("id", userId.Value);
+
+        await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            return CreateUser(reader);
+        }
+
+        return null;
+    }
+
+    private static User CreateUser(DbDataReader reader)
+    {
+        return new User(
+            new UserId(reader.GetInt64("user_id")),
+            reader.GetGuid("authorization_id"),
+            reader.GetFieldValue<DateTimeOffset>("created_at"));
     }
 }

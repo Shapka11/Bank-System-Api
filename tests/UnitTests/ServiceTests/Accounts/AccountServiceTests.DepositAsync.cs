@@ -55,7 +55,7 @@ public sealed partial class AccountServiceTests
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.AccountsRepository
-            .SetupQueryAccountById(account.Id, account)
+            .SetupGetAccountsByIdsForUpdate(account.Id, account)
             .SetupUpdateAccount([updatedAccount]);
 
         _persistenceContext.HistoryOperationsRepository
@@ -124,7 +124,7 @@ public sealed partial class AccountServiceTests
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.AccountsRepository
-            .SetupQueryAccountById(accountId);
+            .SetupGetAccountsByIdsForUpdate(accountId);
 
         // Act
         Deposit.Response response = await _accountService.DepositAsync(request, default);
@@ -150,7 +150,7 @@ public sealed partial class AccountServiceTests
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.AccountsRepository
-            .SetupQueryAccountById(account.Id, account);
+            .SetupGetAccountsByIdsForUpdate(account.Id, account);
 
         // Act
         Deposit.Response response = await _accountService.DepositAsync(request, default);
@@ -178,7 +178,7 @@ public sealed partial class AccountServiceTests
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.AccountsRepository
-            .SetupQueryAccountById(account.Id, account);
+            .SetupGetAccountsByIdsForUpdate(account.Id, account);
 
         // Act
         Func<Task> result = async () => await _accountService.DepositAsync(request, default);

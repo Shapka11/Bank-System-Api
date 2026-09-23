@@ -6,7 +6,9 @@ namespace BankSystemApi.Application.Abstractions.Persistence.Repositories;
 
 public interface IUserRepository
 {
-    Task<AddUserResult> TryAddAsync(IReadOnlyCollection<User> users, CancellationToken cancellationToken);
+    Task<AddUserResult> TryAddAsync(User user, CancellationToken cancellationToken);
 
     IAsyncEnumerable<User> QueryAsync(UserQuery query, CancellationToken cancellationToken);
+
+    Task<User?> GetByIdForUpdateAsync(UserId userId, CancellationToken cancellationToken);
 }

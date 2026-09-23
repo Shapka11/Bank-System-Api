@@ -212,7 +212,7 @@ public sealed class InvoiceControllerTests : IAsyncLifetime
     private async Task<User> SeedUser()
     {
         User user = new AutoFaker<User>().Generate();
-        var result = (AddUserResult.Success)await _userRepository.TryAddAsync([user], default);
+        var result = (AddUserResult.Success)await _userRepository.TryAddAsync(user, default);
 
         return result.User;
     }
@@ -224,7 +224,10 @@ public sealed class InvoiceControllerTests : IAsyncLifetime
             .RuleFor(a => a.Number, new AccountNumber(Guid.NewGuid().ToString()))
             .Generate()
             .MapToDomain();
-        return await _accountRepository.AddAsync([account], default).FirstAsync();
+
+        var result = (AddAccountResult.Success)await _accountRepository.TryAddAsync(account, default);
+
+        return result.Account;
     }
 
     private async Task<Invoice> SeedInvoice(

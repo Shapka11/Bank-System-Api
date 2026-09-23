@@ -63,7 +63,7 @@ public sealed partial class InvoiceServiceTests
 
         _persistenceContext.InvoicesRepository
             .SetupUpdateInvoice(invoice)
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         _persistenceContext.HistoryOperationsRepository
             .SetupAddHistoryOperation(
@@ -77,7 +77,7 @@ public sealed partial class InvoiceServiceTests
             invoice.Amount.Value,
             InvoiceStatusDto.Revoked,
             invoice.CreatedAt,
-            invoice.UpdatedAt);
+            currentTime);
 
         _serviceMetrics.Setup(m => m.IncInvoiceRevoked());
 
@@ -150,7 +150,7 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id);
 
         // Act
         RevokeInvoice.Response response = await _invoiceService.RevokeAsync(request, default);
@@ -183,6 +183,8 @@ public sealed partial class InvoiceServiceTests
 
         RevokeInvoice.Request request = new(user.AuthorizationId, invoice.Id.Value);
 
+        _dateTimeProvider.Setup(time => time.Current).Returns(_faker.Date.RecentOffset());
+
         _persistenceContext.UsersRepository
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
@@ -191,7 +193,7 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryAccountById(receiverAccount.Id, receiverAccount);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         RevokeInvoice.Response response = await _invoiceService.RevokeAsync(request, default);
@@ -230,7 +232,7 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryAccountById(receiverAccount.Id, receiverAccount);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         RevokeInvoice.Response response = await _invoiceService.RevokeAsync(request, default);
@@ -268,7 +270,7 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryAccountById(senderAccount.Id);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         RevokeInvoice.Response response = await _invoiceService.RevokeAsync(request, default);
@@ -307,7 +309,7 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryAccountById(receiverAccount.Id);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         RevokeInvoice.Response response = await _invoiceService.RevokeAsync(request, default);
@@ -344,7 +346,7 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryAccountById(senderAccount.Id, senderAccount);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         RevokeInvoice.Response response = await _invoiceService.RevokeAsync(request, default);

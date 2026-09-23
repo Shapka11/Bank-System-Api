@@ -1,5 +1,6 @@
 using BankSystemApi.Application.Abstractions.Persistence.Queries;
 using BankSystemApi.Application.Abstractions.Persistence.Repositories;
+using BankSystemApi.Application.Abstractions.Persistence.Results;
 using BankSystemApi.Domain.Accounts;
 using BankSystemApi.Domain.Users;
 using BankSystemApi.Domain.ValueObjects;
@@ -9,29 +10,37 @@ namespace UnitTests.MockExtensions;
 
 public static class AccountRepositoryMockExtensions
 {
-    public static Mock<IAccountRepository> SetupAddAccount(
+    public static Mock<IAccountRepository> SetupTryAddAccount(
         this Mock<IAccountRepository> mock,
         Account account,
-        AccountId expectedId)
+        AddAccountResult expectedResult)
     {
         mock
-            .Setup(repo => repo.AddAsync(
-                It.Is<IReadOnlyCollection<Account>>(с => с.Any(a => a.Number == account.Number)),
+            .Setup(repo => repo.TryAddAsync(
+                It.Is<Account>(candidate => candidate.Number == account.Number),
                 It.IsAny<CancellationToken>()))
-            .Returns((IReadOnlyCollection<Account> list, CancellationToken _) =>
-            {
-                Account first = list.First();
-                var result = new Account(
-                    expectedId,
-                    first.UserId,
-                    first.Type,
-                    first.Number,
-                    first.Password,
-                    first.Balance,
-                    first.CreatedAt,
-                    first.UpdatedAt);
-                return new[] { result }.ToAsyncEnumerable();
-            });
+            .ReturnsAsync(expectedResult);
+
+        return mock;
+    }
+
+    public static Mock<IAccountRepository> SetupGetAccountsByIdsForUpdate(
+        this Mock<IAccountRepository> mock,
+        AccountId accountId,
+        params Account[] returnedAccounts)
+        => mock.SetupGetAccountsByIdsForUpdate([accountId], returnedAccounts);
+
+    public static Mock<IAccountRepository> SetupGetAccountsByIdsForUpdate(
+        this Mock<IAccountRepository> mock,
+        IReadOnlyCollection<AccountId> accountIds,
+        params Account[] returnedAccounts)
+    {
+        mock
+            .Setup(repo => repo.GetByIdsForUpdateAsync(
+                It.Is<IReadOnlyCollection<AccountId>>(ids =>
+                    ids.Count == accountIds.Count && accountIds.All(ids.Contains)),
+                It.IsAny<CancellationToken>()))
+            .Returns(returnedAccounts.ToAsyncEnumerable());
 
         return mock;
     }

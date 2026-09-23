@@ -37,7 +37,9 @@ public sealed class Invoice
 
     public DateTimeOffset CreatedAt { get; }
 
-    public DateTimeOffset UpdatedAt { get; }
+    public DateTimeOffset UpdatedAt { get; private set; }
+
+    public void UpdateTime(DateTimeOffset time) => UpdatedAt = time;
 
     public PayInvoiceResult Pay()
     {

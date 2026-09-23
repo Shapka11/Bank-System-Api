@@ -33,7 +33,7 @@ internal sealed class UserService : IUserService
 
         var user = new User(UserId.Default, request.AuthorizationId, _dateTimeProvider.Current);
 
-        AddUserResult result = await _context.UsersRepository.TryAddAsync([user], cancellationToken);
+        AddUserResult result = await _context.UsersRepository.TryAddAsync(user, cancellationToken);
         if (result is AddUserResult.Success success)
         {
             _logger.LogInformation(
@@ -62,7 +62,7 @@ internal sealed class UserService : IUserService
                 "Unauthorized access attempt: User ID '{UserId}' is exist.",
                 request.AuthorizationId);
 
-            return new AddUser.Response.Success(user.MapToDto());
+            return new AddUser.Response.Success(dbUser.MapToDto());
         }
 
         throw new UnreachableException();

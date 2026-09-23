@@ -3,6 +3,7 @@ using BankSystemApi.Application.Abstractions.Events.Publishers;
 using BankSystemApi.Application.Abstractions.Metrics;
 using BankSystemApi.Application.Abstractions.Persistence;
 using BankSystemApi.Application.Abstractions.Persistence.Queries;
+using BankSystemApi.Application.Abstractions.Persistence.Results;
 using BankSystemApi.Application.Activities;
 using BankSystemApi.Application.Contracts.Accounts;
 using BankSystemApi.Application.Contracts.Accounts.Operations;
@@ -69,8 +70,11 @@ internal sealed class AccountService : IAccountService
             return new CreateAccount.Response.Unauthorized(request.CallerUserId.ToString());
         }
 
+        await using IPersistenceTransaction transaction = await _transactionProvider
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
         User? targetUser = await _context.UsersRepository
-            .FindByIdAsync(new UserId(request.TargetUserId), cancellationToken);
+            .GetByIdForUpdateAsync(new UserId(request.TargetUserId), cancellationToken);
         if (targetUser is null)
         {
             _logger.LogWarning("Unauthorized access attempt: User ID '{UserId}' is not exist.", request.TargetUserId);
@@ -106,12 +110,22 @@ internal sealed class AccountService : IAccountService
             _dateTimeProvider.Current,
             _dateTimeProvider.Current);
 
-        await using IPersistenceTransaction transaction = await _transactionProvider
-            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+        AddAccountResult result = await _context.AccountsRepository
+            .TryAddAsync(account, cancellationToken);
 
-        account = await _context.AccountsRepository
-            .AddAsync([account], cancellationToken)
-            .FirstAsync(cancellationToken);
+        if (result is AddAccountResult.AlreadyExist)
+        {
+            _logger.LogWarning(
+                "Account with number {AccountNumber} already exists.",
+                accountNumber.Value);
+
+            return new CreateAccount.Response.AccountAlreadyExists(accountNumber.Value);
+        }
+
+        if (result is not AddAccountResult.Success success)
+            throw new UnreachableException();
+
+        account = success.Account;
 
         HistoryOperation operation = new CreateAccountHistoryOperation(
             HistoryOperationId.Default,
@@ -155,8 +169,14 @@ internal sealed class AccountService : IAccountService
             return new Deposit.Response.Unauthorized(request.UserId);
         }
 
+        await using IPersistenceTransaction transaction = await _transactionProvider
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
         var accountId = new AccountId(request.AccountId);
-        Account? account = await _context.AccountsRepository.FindAccountByIdAsync(accountId, cancellationToken);
+        Account? account = await _context.AccountsRepository
+            .GetByIdsForUpdateAsync([accountId], cancellationToken)
+            .SingleOrDefaultAsync(cancellationToken);
+
         if (account is null)
         {
             _logger.LogWarning("Account with id {AccountId} not found.", accountId.Value);
@@ -180,9 +200,6 @@ internal sealed class AccountService : IAccountService
             account.Id,
             depositTotal,
             _dateTimeProvider.Current);
-
-        await using IPersistenceTransaction transaction = await _transactionProvider
-            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
 
         await _context.AccountsRepository.UpdateAsync([account], cancellationToken);
 
@@ -214,8 +231,14 @@ internal sealed class AccountService : IAccountService
             return new Withdraw.Response.Unauthorized(request.UserId);
         }
 
+        await using IPersistenceTransaction transaction = await _transactionProvider
+            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+
         var accountId = new AccountId(request.AccountId);
-        Account? account = await _context.AccountsRepository.FindAccountByIdAsync(accountId, cancellationToken);
+        Account? account = await _context.AccountsRepository
+            .GetByIdsForUpdateAsync([accountId], cancellationToken)
+            .SingleOrDefaultAsync(cancellationToken);
+
         if (account is null)
         {
             _logger.LogWarning("Account with id {AccountId} not found.", accountId.Value);
@@ -245,9 +268,6 @@ internal sealed class AccountService : IAccountService
             account.Id,
             withdrawTotal,
             _dateTimeProvider.Current);
-
-        await using IPersistenceTransaction transaction = await _transactionProvider
-            .BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
 
         await _context.AccountsRepository.UpdateAsync([account], cancellationToken);
 

@@ -1,11 +1,12 @@
-﻿using BankSystemApi.Domain.Accounts;
+﻿using BankSystemApi.Application.Abstractions.Persistence.Results;
+using BankSystemApi.Domain.Accounts;
 using AccountQuery = BankSystemApi.Application.Abstractions.Persistence.Queries.AccountQuery;
 
 namespace BankSystemApi.Application.Abstractions.Persistence.Repositories;
 
 public interface IAccountRepository
 {
-    IAsyncEnumerable<Account> AddAsync(IReadOnlyCollection<Account> accounts, CancellationToken cancellationToken);
+    Task<AddAccountResult> TryAddAsync(Account account, CancellationToken cancellationToken);
 
     Task UpdateAsync(IReadOnlyCollection<Account> accounts, CancellationToken cancellationToken);
 

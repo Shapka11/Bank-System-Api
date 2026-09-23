@@ -61,13 +61,15 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.AccountsRepository
-            .SetupQueryAccountById(senderAccount.Id, senderAccount)
-            .SetupQueryAccountById(receiverAccount.Id, receiverAccount)
+            .SetupGetAccountsByIdsForUpdate(
+                [senderAccount.Id, receiverAccount.Id],
+                senderAccount,
+                receiverAccount)
             .SetupUpdateAccount([senderAccount, receiverAccount]);
 
         _persistenceContext.InvoicesRepository
             .SetupUpdateInvoice(invoice)
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         _persistenceContext.HistoryOperationsRepository
             .SetupAddHistoryOperation(
@@ -81,7 +83,7 @@ public sealed partial class InvoiceServiceTests
             invoice.Amount.Value,
             InvoiceStatusDto.Paid,
             invoice.CreatedAt,
-            invoice.UpdatedAt);
+            currentTime);
 
         _serviceMetrics.Setup(m => m.IncInvoicePaid());
 
@@ -141,7 +143,7 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoiceId);
+            .SetupGetInvoiceByIdForUpdate(invoiceId);
 
         // Act
         PayInvoice.Response response = await _invoiceService.PayAsync(request, default);
@@ -175,15 +177,19 @@ public sealed partial class InvoiceServiceTests
 
         PayInvoice.Request request = new(user.AuthorizationId, invoice.Id.Value);
 
+        _dateTimeProvider.Setup(time => time.Current).Returns(_faker.Date.RecentOffset());
+
         _persistenceContext.UsersRepository
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         _persistenceContext.AccountsRepository
-            .SetupQueryAccountById(senderAccount.Id, senderAccount)
-            .SetupQueryAccountById(receiverAccount.Id, receiverAccount);
+            .SetupGetAccountsByIdsForUpdate(
+                [senderAccount.Id, receiverAccount.Id],
+                senderAccount,
+                receiverAccount);
 
         // Act
         PayInvoice.Response response = await _invoiceService.PayAsync(request, default);
@@ -219,11 +225,13 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         _persistenceContext.AccountsRepository
-            .SetupQueryAccountById(senderAccount.Id, senderAccount)
-            .SetupQueryAccountById(receiverAccount.Id, receiverAccount);
+            .SetupGetAccountsByIdsForUpdate(
+                [senderAccount.Id, receiverAccount.Id],
+                senderAccount,
+                receiverAccount);
 
         // Act
         PayInvoice.Response response = await _invoiceService.PayAsync(request, default);
@@ -258,10 +266,10 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.AccountsRepository
-            .SetupQueryAccountById(senderAccount.Id);
+            .SetupGetAccountsByIdsForUpdate([senderAccount.Id, receiverAccount.Id]);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         PayInvoice.Response response = await _invoiceService.PayAsync(request, default);
@@ -296,11 +304,12 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.AccountsRepository
-            .SetupQueryAccountById(senderAccount.Id, senderAccount)
-            .SetupQueryAccountById(receiverAccount.Id);
+            .SetupGetAccountsByIdsForUpdate(
+                [senderAccount.Id, receiverAccount.Id],
+                senderAccount);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         PayInvoice.Response response = await _invoiceService.PayAsync(request, default);
@@ -333,11 +342,13 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.AccountsRepository
-            .SetupQueryAccountById(senderAccount.Id, senderAccount)
-            .SetupQueryAccountById(receiverAccount.Id, receiverAccount);
+            .SetupGetAccountsByIdsForUpdate(
+                [senderAccount.Id, receiverAccount.Id],
+                senderAccount,
+                receiverAccount);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         PayInvoice.Response response = await _invoiceService.PayAsync(request, default);
@@ -373,11 +384,13 @@ public sealed partial class InvoiceServiceTests
             .SetupQueryUserByAuthId(user.AuthorizationId, user);
 
         _persistenceContext.AccountsRepository
-            .SetupQueryAccountById(senderAccount.Id, senderAccount)
-            .SetupQueryAccountById(receiverAccount.Id, receiverAccount);
+            .SetupGetAccountsByIdsForUpdate(
+                [senderAccount.Id, receiverAccount.Id],
+                senderAccount,
+                receiverAccount);
 
         _persistenceContext.InvoicesRepository
-            .SetupQueryInvoiceById(invoice.Id, invoice);
+            .SetupGetInvoiceByIdForUpdate(invoice.Id, invoice);
 
         // Act
         PayInvoice.Response response = await _invoiceService.PayAsync(request, default);

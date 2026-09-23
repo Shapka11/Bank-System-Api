@@ -1,4 +1,5 @@
 ﻿using BankSystemApi.Application.Abstractions.Persistence.Repositories;
+using BankSystemApi.Application.Abstractions.Persistence.Results;
 using BankSystemApi.Domain.Accounts;
 using BankSystemApi.Domain.Users;
 using BankSystemApi.Domain.ValueObjects;
@@ -20,35 +21,38 @@ internal sealed class AccountRepository : IAccountRepository
         _connectionProvider = connectionProvider;
     }
 
-    public async IAsyncEnumerable<Account> AddAsync(
-        IReadOnlyCollection<Account> accounts,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async Task<AddAccountResult> TryAddAsync(
+        Account account,
+        CancellationToken cancellationToken)
     {
         const string sql = """
         INSERT INTO accounts (user_id, type, account_number, password, balance, created_at, updated_at)
-        SELECT user_id, type, number, password, balance, created_at, updated_at
-        FROM unnest(:userids, :types, :numbers, :passwords, :balances, :createdAts, :updatedAts) 
-           AS source(user_id, type, number, password, balance, created_at, updated_at)
+        VALUES (:userid, :type, :number, :password, :balance, :createdAt, :updatedAt)
+        ON CONFLICT (account_number) DO NOTHING
         RETURNING account_id, user_id, type, account_number, password, balance, created_at, updated_at
         """;
 
         await using IPersistenceConnection connection = await _connectionProvider.GetConnectionAsync(cancellationToken);
 
         await using IPersistenceCommand command = connection.CreateCommand(sql)
-            .AddParameter("userIds", accounts.Select(a => a.UserId.Value))
-            .AddParameter("types", accounts.Select(a => a.Type))
-            .AddParameter("numbers", accounts.Select(a => a.Number.Value))
-            .AddParameter("passwords", accounts.Select(a => a.Password.Value))
-            .AddParameter("balances", accounts.Select(a => a.Balance.Value))
-            .AddParameter("createdAts", accounts.Select(a => a.CreatedAt))
-            .AddParameter("updatedAts", accounts.Select(a => a.UpdatedAt));
+            .AddParameter("userId", account.UserId.Value)
+            .AddParameter("type", account.Type)
+            .AddParameter("number", account.Number.Value)
+            .AddParameter("password", account.Password.Value)
+            .AddParameter("balance", account.Balance.Value)
+            .AddParameter("createdAt", account.CreatedAt)
+            .AddParameter("updatedAt", account.UpdatedAt);
 
         await using DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
 
-        while (await reader.ReadAsync(cancellationToken))
+        if (await reader.ReadAsync(cancellationToken))
         {
-            yield return CreateAccount(reader);
+            Account insertedUser = CreateAccount(reader);
+
+            return new AddAccountResult.Success(insertedUser);
         }
+
+        return new AddAccountResult.AlreadyExist();
     }
 
     public async Task UpdateAsync(IReadOnlyCollection<Account> accounts, CancellationToken cancellationToken)
